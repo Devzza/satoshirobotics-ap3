@@ -43,6 +43,8 @@ interface NFTCanvasProps {
   effectiveEquippedTraits: Record<number, number | null>
   toEquip: number[];
   toUnequip: number[];
+  setToEquip: React.Dispatch<React.SetStateAction<number[]>>
+  setToUnequip: React.Dispatch<React.SetStateAction<number[]>>
   setImageFile: React.Dispatch<React.SetStateAction<File | null>>
   setImageUploaded: React.Dispatch<React.SetStateAction<boolean>>
   setDriverCID: React.Dispatch<React.SetStateAction<string | null>>
@@ -73,6 +75,8 @@ const NFTCanvas: React.FC<NFTCanvasProps> = ({
   effectiveEquippedTraits,
   toEquip,
   toUnequip,
+  setToEquip,
+  setToUnequip,
   canUploadDriverImage,
   setImageFile,
   setImageUploaded,
@@ -976,6 +980,14 @@ const approveContract = () => {
 };
 
 
+// Resetear toEquip y toUnequip
+  // Resetear al cambiar el token base seleccionado o metadata actualizada
+  useEffect(() => {
+    setToEquip([]);
+    setToUnequip([]);
+  }, [selectedTokenId, updatedNft]);
+
+
   return (
     <main>
     <div>
@@ -993,27 +1005,29 @@ const approveContract = () => {
 <div>
 {/* Botón para abrir la modal */}
 <button
-  onClick={openModal}
-  disabled={
-    !(
-      (equippedTraits?.[1] !== undefined && equippedTraits?.[1] !== null) ||
-      (selectedTraits?.[1] !== undefined && selectedTraits?.[1] !== null) ||
-      (!hasTraits && baseImage)
-    )
-  }
-  className={`
-    my-4 px-4 py-2 rounded-md transition 
-    ${
-      (equippedTraits?.[1] !== undefined && equippedTraits?.[1] !== null) ||
-      (selectedTraits?.[1] !== undefined && selectedTraits?.[1] !== null) ||
-      (!hasTraits && baseImage)
-        ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
-        : "bg-gray-300 text-gray-600 cursor-not-allowed"
-    }
-  `}
->
-  Assemble
-</button>
+      onClick={openModal}
+      disabled={
+        !(
+          (equippedTraits?.[1] !== undefined && equippedTraits?.[1] !== null) ||
+          (selectedTraits?.[1] !== undefined && selectedTraits?.[1] !== null) ||
+          (!hasTraits && baseImage)
+        ) || loading
+      }
+      className={`
+        my-4 px-4 py-2 rounded-md transition
+        ${
+          loading
+            ? "bg-gray-300 text-gray-600 cursor-not-allowed" // Estilo cuando está loading
+            : (equippedTraits?.[1] !== undefined && equippedTraits?.[1] !== null) ||
+              (selectedTraits?.[1] !== undefined && selectedTraits?.[1] !== null) ||
+              (!hasTraits && baseImage)
+            ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer" // Estilo cuando está habilitado
+            : "bg-gray-300 text-gray-600 cursor-not-allowed" // Estilo cuando está deshabilitado
+        }
+      `}
+    >
+      Assemble
+    </button>
 
 
       {/* Modal */}

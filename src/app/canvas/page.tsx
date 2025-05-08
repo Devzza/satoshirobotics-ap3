@@ -307,11 +307,7 @@ useEffect(() => {
   const [toEquip, setToEquip] = useState<number[]>([]);
   const [toUnequip, setToUnequip] = useState<number[]>([]);
 
-  // Resetear al cambiar el token base seleccionado
-useEffect(() => {
-  setToEquip([]);
-  setToUnequip([]);
-}, [selectedTokenId]);
+
 
   const onClickEquip = (traitId: number) => {
     setToEquip((prev) => {
@@ -552,13 +548,22 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
     ) : ownedBase.length === 0 ? (
       /* If account connected but no ownedBase */
       <div className="flex justify-center items-center h-screen">
+      {isLoadingBase ? (
+        // Mostrar el loader mientras isLoadingBase es true
+        <div
+          className="w-10 h-10 border-4 border-t-blue-500 border-gray-300 rounded-full animate-spin">
+
+          </div>
+              ) : (
+        // Mostrar el botón para ir al mint si isLoadingBase es false
         <button
           onClick={() => router.push("/Mint")}
           className="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
         >
           Mint your first Robot
         </button>
-      </div>
+      )}
+    </div>
     ) : (
 
       <div className="flex flex-col justify-center items-center h-full p-10 space-y-4">
@@ -619,6 +624,8 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
             effectiveEquippedTraits={effectiveEquippedTraits}
             toEquip={toEquip}
             toUnequip={toUnequip}
+            setToEquip={setToEquip}
+            setToUnequip={setToUnequip}
             setImageFile={setImageFile}
             setImageUploaded={setImageUploaded}
             setDriverCID={setDriverCID}
@@ -818,7 +825,7 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
           }
         }}
         className="my-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition cursor-pointer">
-        Set Driver
+        Upload PFP
       </button>
     </>
   ) : (
