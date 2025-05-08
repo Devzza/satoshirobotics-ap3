@@ -33,7 +33,7 @@ export const MechasProvider = ({ children }: { children: React.ReactNode }) => {
       const totalSupplyBigInt = BigInt(totalNFTSupply.toString());
 
       const ownerPromises = [];
-      for (let tokenId = 0n; tokenId < totalSupplyBigInt; tokenId++) {
+      for (let tokenId = BigInt(0); tokenId < totalSupplyBigInt; tokenId++) {
         ownerPromises.push(
           ownerOf({
             contract: BASE_CONTRACT,
