@@ -1,0 +1,89 @@
+"use client"
+
+import React, { useEffect, useState, useMemo } from "react";
+import { getContract } from "thirdweb";
+import { TRAITS_CONTRACT, SIMIANS_CONTRACT } from "../../../constants/addresses";
+import { chain } from "../chain";
+import { client } from "../client";
+import { useActiveAccount, useReadContract } from "thirdweb/react";
+import NavBar from "../components/NavBar";
+
+const TraitDisplay = ({ tokenId }: { tokenId: number }) => {
+  const account = useActiveAccount();
+  const [traitTypes, setTraitTypes] = useState<number[]>([]); // Tipos de traits que tiene el NFT base
+  const [equippedTraits, setEquippedTraits] = useState<any>({}); // Información de los traits equipados
+
+  // Obtener contrato
+  const contract = useMemo(() => {
+    return getContract({
+      client: client,
+      chain: chain,
+      address: SIMIANS_CONTRACT.address,
+    });
+  }, [account, chain]);
+
+  const traitsContract = useMemo(() => {
+    return getContract({
+      client: client,
+      chain: chain,
+      address: TRAITS_CONTRACT.address,
+    });
+  }, [account, chain]);
+
+  // Obtener los tipos de traits equipados
+  const { data: types, error, isLoading } = useReadContract({
+    contract,
+    method: "getEquippedTraitTypes",
+    params: [BigInt(tokenId)],
+  });
+
+  useEffect(() => {
+    const fetchTraits = async () => {
+      try {
+        if (types) {
+          // Asegurarse de que 'types' es un array de números antes de asignarlo
+          const parsedTypes = Array.isArray(types) ? types.map(Number) : [];
+          setTraitTypes(parsedTypes);
+
+          // Obtener los traitIds para cada tipo de trait
+          const traitData: any = {};
+          for (let i = 0; i < parsedTypes.length; i++) {
+            if (parsedTypes[i] !== 0) {
+  const { data: traitId } = useReadContract({
+    contract,
+    method: "getEquippedTraits",
+    params: [BigInt(tokenId)],
+  });
+              traitData[i] = traitId; // Asociamos el tipo de trait con el traitId
+            } else {
+              traitData[i] = null; // Si no hay trait de este tipo
+            }
+          }
+          setEquippedTraits(traitData);
+        }
+      } catch (error) {
+        console.error("Error fetching equipped traits:", error);
+      }
+    };
+
+    fetchTraits();
+  }, [tokenId, contract, types]); // Asegúrate de que `types` esté listo antes de intentar usarlo
+
+  // Renderizar la información
+  return (
+    <div className="traits-display">
+        <NavBar />
+      <div>
+        <h3>Background (Type 0):</h3>
+        <p>{equippedTraits[0] ? `Trait ID: ${equippedTraits[0]}` : "None"}</p>
+      </div>
+      <div>
+        <h3>Clothing (Type 1):</h3>
+        <p>{equippedTraits[1] ? `Trait ID: ${equippedTraits[1]}` : "None"}</p>
+      </div>
+      {/* Aquí puedes agregar más secciones para los otros tipos de traits */}
+    </div>
+  );
+};
+
+export default TraitDisplay;
