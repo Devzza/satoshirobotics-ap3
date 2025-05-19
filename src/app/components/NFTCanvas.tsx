@@ -616,6 +616,7 @@ const uploadToIPFS = async (): Promise<string | undefined> => {
     return;
   }
 
+    if (blob) {
   canvas.toBlob((blob) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -625,6 +626,8 @@ const uploadToIPFS = async (): Promise<string | undefined> => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url); // Limpiar la URL
+     } else {
+    console.error('Failed to create Blob from canvas');
   }, 'image/png');
 };
 
