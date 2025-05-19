@@ -638,7 +638,7 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
             <div className="flex flex-col justify-center items-center p-4 rounded-lg">
 
             {/* Mostrar Traits Equipados */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-5 items-center justify-center md:justify-start px-10">
+        <div className="grid grid-cols-2 lg:grid-cols-3 md:grid-cols-3 gap-5 items-center justify-center md:justify-start px-10">
           
           {Object.keys(effectiveEquippedTraits).map((type) => {
     const slotType = parseInt(type);
@@ -701,7 +701,7 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
           {isSelectedToEquip && (
             <button
               onClick={() => onClickCancelEquip(traitId)}
-              className="cursor-pointer mt-4 font-lexend flex items-center justify-center w-full px-6 py-2.5 text-center text-white duration-200 bg-black border-2 border-black rounded-lg inline-flex hover:bg-transparent hover:border-white focus:outline-none focus-visible:outline-black text-sm focus-visible:ring-black"
+              className="cursor-pointer mt-4 font-lexend flex items-center justify-center w-full px-6 py-2.5 text-center text-white duration-200 bg-red-500 rounded-lg inline-flex hover:bg-red-700 focus:outline-none focus-visible:outline-black text-sm focus-visible:ring-black"
             >
               Cancel Equip {traitId}
             </button>
@@ -711,7 +711,7 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
           {hasEquippedTrait && isSelectedToUnequip && !isSelectedToEquip &&(
     <button
       onClick={() => onClickCancelUnequip(equippedTraitId)}
-      className="cursor-pointer mt-4 font-lexend flex items-center justify-center w-full px-6 py-2.5 text-center text-white duration-200 bg-black border-2 border-black rounded-lg inline-flex hover:bg-transparent hover:border-white focus:outline-none focus-visible:outline-black text-sm focus-visible:ring-black"
+      className="cursor-pointer mt-4 font-lexend flex items-center justify-center w-full px-6 py-2.5 text-center text-white duration-200 bg-red-500 rounded-lg inline-flex hover:bg-red-700 focus:outline-none focus-visible:outline-black text-sm focus-visible:ring-black"
     >
       Cancel Unequip {equippedTraitId}
     </button>
@@ -721,7 +721,7 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
           {isEquipped && !isSelectedToUnequip && !isSelectedToEquip && (
             <button
               onClick={() => onClickUnequip(traitId)}
-              className="cursor-pointer mt-4 font-lexend flex items-center justify-center w-full px-6 py-2.5 text-center text-white duration-200 bg-black border-2 border-black rounded-lg inline-flex hover:bg-transparent hover:border-white focus:outline-none focus-visible:outline-black text-sm focus-visible:ring-black"
+              className="cursor-pointer mt-4 font-lexend flex items-center justify-center w-full px-6 py-2.5 text-center text-white duration-200 bg-black border-b-2 border-blue-500 rounded-lg inline-flex hover:bg-blue-500 focus:outline-none focus-visible:outline-black text-sm focus-visible:ring-black"
             >
               Unequip Part {traitId}
             </button>
@@ -731,7 +731,7 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
           {!isEquipped && !isSelectedToEquip && (
             <button
               onClick={() => openModal(slotType)}
-              className="mt-2 font-lexend flex items-center justify-center w-full px-6 py-2.5 text-center text-white duration-200 bg-black border-2 border-black rounded-lg inline-flex hover:bg-transparent hover:border-white focus:outline-none text-sm cursor-pointer"
+              className="mt-2 font-lexend flex items-center justify-center w-full px-6 py-2.5 text-center text-white duration-200 bg-black border-b-2 border-blue-500 rounded-lg inline-flex hover:bg-blue-500 focus:outline-none text-sm cursor-pointer"
             >
               Equip Part
             </button>

@@ -162,6 +162,7 @@ export function CapsuleCardSingle({
         
           </ul>
         </div>
+
       )}
     </div>
   </div>

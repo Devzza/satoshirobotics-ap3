@@ -78,7 +78,6 @@ const account = useActiveAccount();
          
           <div>
             <h3 className="text-lg font-semibold">{nft.metadata.name}</h3>
-            <p className="text-sm text-gray-600">{nft.metadata.description}</p>
           </div>
         </li>
       ))}

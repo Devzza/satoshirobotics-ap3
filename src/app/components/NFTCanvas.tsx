@@ -581,8 +581,7 @@ const uploadToIPFS = async (): Promise<string | undefined> => {
             console.log('Subido a IPFS con hash:', json.ipfsHash);
             setIpfsHash(json.ipfsHash);
             resolve(json.ipfsHash);
-            setIsUploading(false);
-            setIsSettingURI(true);
+           
           } else {
             console.error('Error al subir a IPFS:', json);
             alert(`Error al subir a IPFS: ${json.message}`);
@@ -599,7 +598,6 @@ const uploadToIPFS = async (): Promise<string | undefined> => {
           setIsUploading(false);
           reject(undefined);
         } finally {
-          setIsUploading(false);
         }
       },
       'image/png'
@@ -612,19 +610,23 @@ const uploadToIPFS = async (): Promise<string | undefined> => {
   
 
   const downloadImage = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      console.error('Canvas is not initialized');
-      return;
-    }
+  const canvas = canvasRef.current;
+  if (!canvas) {
+    console.error('Canvas is not initialized');
+    return;
+  }
 
+  canvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = 'nft-image.png';
+    link.href = url;
+    link.download = 'Satoshi AP3 Robot.png';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+    URL.revokeObjectURL(url); // Limpiar la URL
+  }, 'image/png');
+};
 
 
   const [metadataHash, setMetadataHash] = useState<string | undefined>(undefined);
@@ -720,7 +722,9 @@ const uploadToIPFS = async (): Promise<string | undefined> => {
 
 
   const handleUpload = async () => {
-    setLoading(true);
+    setIsUploading(true);
+    setIsSettingURI(false); 
+
   
     try {
       // 1️⃣ Subir la imagen generada en el canvas a IPFS
@@ -736,7 +740,6 @@ const uploadToIPFS = async (): Promise<string | undefined> => {
       // 2️⃣ Generar la nueva metadata con la imagen actualizada
       if (!selectedNFTMetadata) {
         console.error("❌ No se ha seleccionado metadata del NFT");
-        setLoading(false);
         return;
       }
   
@@ -802,30 +805,31 @@ if (canUploadDriverImage && driverCID) {
   }
 }
   
-      // 3️⃣ Subir la metadata actualizada a IPFS
-      if (selectedTokenId === null) {
-        console.error("No token ID selected.");
-        return;
-      }
-  
-      console.log("🔄 Intentando subir la metadata a IPFS...");
-  
-      const uploadedMetadataCid = await uploadMetadataToIPFS(updatedMetadata, selectedTokenId);
-      if (!uploadedMetadataCid) {
-        console.error("❌ No se pudo subir la metadata a IPFS");
-        setLoading(false);
-        return;
-      }
-  
-      console.log("✅ Metadata subida a IPFS:", uploadedMetadataCid);
-      setNewMetadataCid(uploadedMetadataCid);
-  
-    } catch (error) {
-      console.error("❌ Error en handleUpload:", error);
-    } finally {
-      setLoading(false);
+         // 3️⃣ Subir la metadata actualizada a IPFS
+    if (selectedTokenId === null) {
+      console.error("No token ID selected.");
+      return;
     }
-  };
+
+    console.log("🔄 Intentando subir la metadata a IPFS...");
+
+    const uploadedMetadataCid = await uploadMetadataToIPFS(updatedMetadata, selectedTokenId);
+    if (!uploadedMetadataCid) {
+      console.error("❌ No se pudo subir la metadata a IPFS");
+      return;
+    }
+
+    console.log("✅ Metadata subida a IPFS:", uploadedMetadataCid);
+    setNewMetadataCid(uploadedMetadataCid);
+    setIsUploading(false);
+setIsSettingURI(true);
+
+  } catch (error) {
+    console.error("❌ Error en handleUpload:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (!canUploadDriverImage) {
@@ -864,6 +868,9 @@ const [isUpdating, setIsUpdating] = useState(false); // Para manejar el estado d
 const [nft, setNft] = useState<NFT | null>(null); // Guardamos el NFT actualizado
 
 const onClickSetUri = async () => {
+  console.log("🚀 onClickSetUri llamado");
+  //setIsUpdating(true);
+
   if (!newMetadataCid) {
     alert("No se ha subido la metadata");
     return;
@@ -874,10 +881,19 @@ const onClickSetUri = async () => {
   const traitsToEquip = toEquip.map((id) => BigInt(id));
   const traitsToUnequip = toUnequip.map((id) => BigInt(id));
 
+  console.log("metadataUri:", metadataUri);
+  console.log("tokenId:", tokenId);
+  console.log("traitsToEquip:", traitsToEquip);
+  console.log("traitsToUnequip:", traitsToUnequip);
+
   const uniqueEquip = traitsToEquip.filter((id) => !traitsToUnequip.includes(id));
   const uniqueUnequip = traitsToUnequip.filter((id) => !traitsToEquip.includes(id));
 
-  setIsSettingURI(true); // Paso 2 visible
+  console.log("uniqueEquip:", uniqueEquip);
+  console.log("uniqueUnequip:", uniqueUnequip);
+
+  setIsSettingURI(true);
+  console.log("Paso 2: setIsSettingURI(true)");
 
   const tx = prepareContractCall({
     contract: mechasContract,
@@ -885,14 +901,17 @@ const onClickSetUri = async () => {
     params: [tokenId, uniqueEquip, uniqueUnequip, metadataUri],
   });
 
+  console.log("tx:", tx);
+
   sendTransaction(tx, {
     onSuccess: async () => {
       console.log("✅ URI y traits actualizados");
       setIsSettingURI(false);
-      setIsUpdating(true); // Paso 3 visible
+      setIsUpdating(true);
+      console.log("Paso 3: setIsUpdating(true)");
 
       await new Promise((resolve) => setTimeout(resolve, 3000));
-      await refetch();
+      await refetch(); // Asegúrate de que 'refetch' esté definido y sea accesible
 
       const updated = ownedMechas.find(
         (nft) => BigInt(nft.id) === tokenId
@@ -900,11 +919,14 @@ const onClickSetUri = async () => {
 
       if (updated) {
         setUpdatedNft(updated); // Paso 4 visible
+        console.log("Paso 4: setUpdatedNft(updated)");
       } else {
         console.warn("⚠️ No se encontró el NFT actualizado");
       }
 
       setIsUpdating(false);
+      setResetTraits(true);
+
     },
     onError: (err) => {
       console.error("❌ Error al actualizar URI", err);
@@ -982,10 +1004,17 @@ const approveContract = () => {
 
 // Resetear toEquip y toUnequip
   // Resetear al cambiar el token base seleccionado o metadata actualizada
+  const [resetTraits, setResetTraits] = useState(false);
+
+  // Resetear toEquip y toUnequip
   useEffect(() => {
-    setToEquip([]);
-    setToUnequip([]);
-  }, [selectedTokenId, updatedNft]);
+    if (resetTraits) {
+      setToEquip([]);
+      setToUnequip([]);
+      setResetTraits(false); // Resetear el estado de reseteo
+    }
+  }, [resetTraits, selectedTokenId]);
+  
 
 
   return (

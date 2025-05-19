@@ -92,7 +92,7 @@ export default function Capsules() {
 
       {/* Si la cuenta no está conectada */}
           {!account ? (
-            <div className="flex justify-center items-center h-screen">
+      <div className="flex flex-col gap-4 justify-center items-center h-screen">
               <h1>Connect your wallet</h1>
              <ConnectButton 
                       client={client} 
@@ -108,21 +108,21 @@ export default function Capsules() {
                       }} 
                       />
             </div>
-          ) : ownedNFTs.length === 0 ? (
+          // ) : ownedNFTs.length === 0 ? (
             /* Si la cuenta está conectada pero no tiene robots */
-            <div className="flex justify-center items-center h-screen">
-              <button
-                onClick={() => router.push("/Mint")}
-                className="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
-              >
-                Mint your first M3CH4
-              </button>
-            </div>
+          //  <div className="flex justify-center items-center h-screen">
+          //    <button
+          //      onClick={() => router.push("/Mint")}
+          //      className="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
+          //    >
+          //      Mint your first robot
+          //    </button>
+          //  </div>
           ) : (
 
             /*Si la cuenta está conectada y tiene robots */
   
-      <div className="overflow-y-auto">
+            <div className="flex flex-col justify-center items-center h-screen">
       <h2 className="text-xl font-semibold mb-4">Your Caps</h2>
   
       {isLoading && <p>Cargando NFTs...</p>}
@@ -130,7 +130,7 @@ export default function Capsules() {
         <p>You have no capsules to claim.</p>
       )}
   
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="flex grid grid-cols-2 md:grid-cols-3 gap-4 justify-center items-center">
         {capsuleData.map(({ tokenId, baseTokenId, claimed }) => (
           <CapsuleCardSingle
             key={tokenId.toString()}
@@ -144,9 +144,9 @@ export default function Capsules() {
   
       <button
         onClick={refetch}
-        className="mt-4 mb-6 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+        className="mt-4 mb-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition"
       >
-        Refrescar cápsulas
+        Refetch capsules
       </button>
     </div>
           )};
