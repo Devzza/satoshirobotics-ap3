@@ -616,19 +616,20 @@ const uploadToIPFS = async (): Promise<string | undefined> => {
     return;
   }
 
-    if (blob) {
-  canvas.toBlob((blob) => {
+ canvas.toBlob((blob) => {
+  if (blob) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'Satoshi AP3 Robot.png';
+    link.download = 'nft-image.png';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url); // Limpiar la URL
-     } else {
+  } else {
     console.error('Failed to create Blob from canvas');
-  }, 'image/png');
+  }
+}, 'image/png');
 };
 
 
