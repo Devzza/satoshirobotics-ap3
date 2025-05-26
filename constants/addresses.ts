@@ -5,7 +5,7 @@ import { getContract } from "thirdweb";
 const baseAddress = "0xfdCcf5E9d767CCBc7f148cEc3CAA58A83DCa6712";
 const traitsAddress = "0xd67ca7a9a480ba478c87b17acbdd76b15ae80836";
 const capsulesAddress = "0x236fAF2A885088Da95297d12eC8804E89375629d";
-const capsDistroAddress = "0xa0593Fed2dcECa48e14914369965B5068a476fD4";
+const capsDistroAddress = "0xc2BE117E7c30519BCe1173A96c077633c3898bf8";
 
 export const BASE_CONTRACT = getContract({
     client: client,

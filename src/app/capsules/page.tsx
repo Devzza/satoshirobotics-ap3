@@ -149,7 +149,7 @@ export default function Capsules() {
         Refetch capsules
       </button>
     </div>
-          )};
+          )}
     </main>
   );
       
