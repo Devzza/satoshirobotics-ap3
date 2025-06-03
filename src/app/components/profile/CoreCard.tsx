@@ -5,28 +5,27 @@ import { useEffect, useState } from "react";
 import { MediaRenderer, useActiveAccount, useSendTransaction, useWaitForReceipt } from "thirdweb/react";
 import { prepareContractCall } from "thirdweb";
 import { IoClose } from "react-icons/io5";
+import { NFT } from "thirdweb";
 
 
 type Props = {
-  nft: {
-    id: bigint;
-    metadata: {
-      name: string;
-      description?: string;
-      image: string;
-      attributes?: { trait_type: string; value: string }[];
-    };
-  };
+  nft: NFT;
   baseContract: any;
-refetch: () => void;
+  refetch: () => void;
 };
 
+
 export default function CoreCard({ nft, baseContract, refetch }: Props) {
-  const { name, image, description, attributes } = nft.metadata;
+const { name, image, description, attributes } = nft.metadata as {
+  name: string;
+  image: string;
+  description?: string;
+  attributes?: { trait_type: string; value: string }[];
+};
 
   const account = useActiveAccount();
 
-const tokenId = nft.id;
+const tokenId = BigInt(nft.id); // si necesitas que sea bigint
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transferAddress, setTransferAddress] = useState('');
