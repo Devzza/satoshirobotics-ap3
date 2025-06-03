@@ -16,6 +16,8 @@ import { CiCircleMinus, CiCirclePlus } from "react-icons/ci";
 import { IoClose } from "react-icons/io5";
 import { ClaimCapsules } from "../components/mint/ClaimCapsuleModal";
 import { useMechas } from "@/context/MechasProvider";
+import TopBar from "../components/TopBar";
+
 
 
 
@@ -73,11 +75,72 @@ export default function Claim() {
         params: [Number(phase)],
       });
 
-    const { data: isWhitelisted, isLoading: isWhitelistLoading } = useReadContract({
-        contract,
-        method: "function whitelist(address) view returns (bool)",
-        params: [account?.address || "0x0000000000000000000000000000000000000000"],
-      });
+const { data: whitelistAllowanceAmount, isLoading: isWhitelistLoading } = useReadContract({
+  contract,
+  method: "function whitelistAllowance(address) view returns (uint256)",
+  params: [account?.address || "0x0000000000000000000000000000000000000000"],
+});
+
+ const { data: whitelistMintedAmount, isLoading: isWhitelistMintedLoading } = useReadContract({
+    contract,
+    method: "function whitelistMinted(address) view returns (uint256)",
+    params: [account?.address || "0x0000000000000000000000000000000000000000"],
+  });
+
+  let remainingAllowance = 0;
+  let isWhitelisted = false;
+  let hasMintedAllAllowed = false; // Nueva variable
+
+   if (!isWhitelistLoading && !isWhitelistMintedLoading) {
+    const allowance = Number(whitelistAllowanceAmount || 0);
+    const minted = Number(whitelistMintedAmount || 0);
+
+    remainingAllowance = allowance - minted;
+    isWhitelisted = allowance > 0; // Una wallet con allowance > 0 está en la whitelist
+    hasMintedAllAllowed = allowance > 0 && minted >= allowance; // Verifica si ya minteó todo su allowance
+
+    console.log("allowance:", allowance);
+    console.log("minted:", minted);
+    console.log("remainingAllowance:", remainingAllowance);
+    console.log("isWhitelisted:", isWhitelisted);
+    console.log("hasMintedAllAllowed:", hasMintedAllAllowed);
+  }
+
+
+ const [mintMessage, setMintMessage] = useState('');
+
+   useEffect(() => {
+    console.log("isCurrentPhaseLoading:", isCurrentPhaseLoading);
+    console.log("phase:", phase);
+    console.log("account?.address:", account?.address);
+    console.log("adminAddress:", adminAddress);
+    console.log("isWhitelistLoading:", isWhitelistLoading);
+    console.log("isWhitelistMintedLoading:", isWhitelistMintedLoading);
+    console.log("isWhitelisted:", isWhitelisted);
+    console.log("whitelistAllowance:", whitelistAllowanceAmount);
+    console.log("whitelistMinted:", whitelistMintedAmount?.toString()); // Imprime el valor actual de whitelistMinted
+    console.log("hasMintedAllAllowed:", hasMintedAllAllowed);
+
+    if (isCurrentPhaseLoading) {
+      setMintMessage('Loading sale phase...');
+    } else if (phase === 0 && account?.address?.toLowerCase() !== adminAddress.toLowerCase()) {
+      setMintMessage('Owner phase');
+    } else if (phase === 1 && !isWhitelistLoading && !isWhitelistMintedLoading) {
+      if (!isWhitelisted) {
+        setMintMessage('You are not whitelisted!');
+      } else if (hasMintedAllAllowed) {
+        setMintMessage('You already minted!');
+      } else {
+        setMintMessage(''); // No message, show mint button
+      }
+    } else {
+      setMintMessage(''); // Default: no message
+    }
+  }, [isCurrentPhaseLoading, phase, account?.address, adminAddress, isWhitelistLoading, isWhitelistMintedLoading, isWhitelisted, hasMintedAllAllowed, whitelistMintedAmount]);
+ 
+  // Calcular si se ha alcanzado el "sold out"
+  const isSoldOut = !isClaimSupplyLoading && !isTotalSupplyLoading && claimedSupply >= totalNFTSupply;
+
 
       const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -96,7 +159,6 @@ export default function Claim() {
           return;
         }
       
-        setIsModalOpen(true);      // Mostrar modal
         setIsLoading(true);        // Mostrar loader
         setMintSuccess(false);     // Aún no ha sido exitoso
       
@@ -123,13 +185,11 @@ export default function Claim() {
             setMintSuccess(true); // Mostrar <ClaimCapsules />
           } else {
             alert("Transacción no enviada o cancelada");
-            setIsModalOpen(false); // Cerrar modal
           }
       
         } catch (err) {
           console.error("Error durante el mint:", err);
           alert("Hubo un error al mintear");
-          setIsModalOpen(false); // Cerrar modal si falla
         } finally {
           setIsLoading(false); // Ocultar loader
         }
@@ -139,6 +199,8 @@ export default function Claim() {
 
     return (
       <section className="w-full min-h-screen bg-[url('/mintbg.svg')] bg-cover bg-center bg-no-repeat">
+        <TopBar message="We recommend using the desktop version. We're still working on the mobile version for a better experience." backgroundColor="#0303d1" textColor="#fff" />
+
   <NavBar />
 
   <div className="flex w-full h-full min-h-screen flex-col lg:flex-row">
@@ -151,7 +213,7 @@ export default function Claim() {
     <h1 className="text-6xl font-black text-white mb-6">Satoshi AP3 Kit</h1>
 
     <div className="text-gray-300 font-regular space-y-4 mb-6">
-  <p><strong>Introducing the Bored Robot AP3 Kit</strong> — the first-ever NFT robot engineered for your digital avatar.</p>
+  <p><strong>Introducing the Satoshi Robot AP3 Kit</strong> — the first-ever NFT robot engineered for your digital avatar.</p>
 
   <p>Crafted with modular precision, the AP3 is fully customizable and comes ready to be piloted by your PFP of choice. Just upload your image, and it seamlessly integrates into the cockpit — no tools required.</p>
 
@@ -233,100 +295,59 @@ export default function Claim() {
 </div>
         
 
-        {isCurrentPhaseLoading ? (
-          <p>Loading sale phase...</p>
-        ) : phase === 0 &&
-          account?.address?.toLowerCase() !== adminAddress.toLowerCase() ? (
-          <p className="text-red-600 font-bold mt-4">
-            Mint not available yet
-          </p>
-        ) : phase === 1 && !isWhitelistLoading && !isWhitelisted ? (
-          <p className="text-red-600 font-bold mt-4">
-            You are not whitelisted!
-          </p>
-        ) : (
-          <>
+       {mintMessage ? (
+  <p className="text-red-600 font-bold mt-4">{mintMessage}</p>
+) : (
+  <div className="py-2 w-full h-16 bg-no-repeat bg-contain bg-center flex flex-col gap-4 items-start justify-start ">
+    <button
+  onClick={handleMint}
+  className={`px-6 py-3 w-full text-white font-semibold rounded-xl shadow-lg transition duration-300 ${
+    isSoldOut
+      ? 'bg-gray-400 cursor-not-allowed' // Estilos para "Sold Out"
+      : 'bg-blue-600 hover:bg-blue-700 cursor-pointer' // Estilos normales
+  }`}
+  disabled={isSoldOut} // Deshabilitar el botón si isSoldOut es verdadero
+>
+  {isSoldOut ? 'Sold Out' : 'Mint'} {/* Cambiar el texto del botón */}
+</button>
 
+    {/*
+    <TransactionButton
+      transaction={() =>
+        prepareContractCall({
+          contract: contract,
+          method: "function claim(address,uint256)",
+          params: [account?.address || "", BigInt(quantity)],
+        })
+      }
+      value={phase !== 0 ? getPrice(quantity) : undefined}
+      onTransactionConfirmed={async () => {
+        alert("NFT minted");
+        refetch();
+      }}
+      className="px-6 py-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition duration-300"
+    >
+      {`Mint`}
+    </TransactionButton>
+    */}
+  </div>
+)}
 
-            <div className="py-2 w-full h-16 bg-no-repeat bg-contain bg-center flex items-start justify-start ">
-              <TransactionButton
-                transaction={() =>
-                  prepareContractCall({
-                    contract: contract,
-                    method: "function claim(address,uint256)",
-                    params: [account?.address || "", BigInt(quantity)],                   })
-                }
-                onTransactionConfirmed={async () => {
-                  setMintSuccess(true);
-                  alert("NFT minted");
-                  setQuantity(1);
-                  refetch();
-                }}
-                className="px-6 py-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition duration-300"
-              >
-                {`Mint`}
-              </TransactionButton>
-            </div>
-          </>
-        )}
+        <div className="flex flex-col">
 
         <p className="text-gray-300 mt-4" style={{ fontSize: "16px" }}>
           Minted: {claimedSupply?.toString()}/{totalNFTSupply?.toString()}
         </p>
+          {isWhitelisted && (phase === 0 || phase === 1) && (
+  <p className="text-green-600 font-bold mt-4">
+    You are whitelisted and allowed to mint {remainingAllowance?.toString()} NFTs.
+  </p>
+)}
+        </div>
       </div>
     </div>
   </div>
   
-<div>
-<button
-          onClick={() => setIsModalOpen(true)}
-          className="!bg-transparent !text-white font-bold w-full px-10 py-4 mb-2"
-          style={{
-            fontSize: "16px",
-            border: "none",
-            borderRadius: "10px",
-            cursor: "pointer",
-            fontFamily: "Lexend",
-          }}
-        >
-          Claim Capsule
-        </button>
-</div>
-
-{/* Modal */}
-{isModalOpen && (
-  <div className="z-50 fixed inset-0 bg-blue-600 bg-opacity-50 overflow-y-auto">
-    <div className="flex justify-center items-start min-h-screen px-4 py-8">
-      <div className="relative bg-white max-w-3xl w-full p-6 rounded-lg shadow-lg overflow-y-auto max-h-[90vh]">
-
-        <button
-          onClick={() => setIsModalOpen(false)}
-          className="absolute top-4 right-4 text-gray-800 text-2xl"
-        >
-          <IoClose />
-        </button>
-
-        <h3 className="text-2xl mb-6 text-center text-blue-600 font-bold">
-          Claim your capsule
-        </h3>
-
-        <ClaimCapsules />
-
-        {isLoading ? (
-          <div className="text-white text-lg">
-            Minting your Robot Kit...
-            <div className="mt-4 animate-spin rounded-full h-10 w-10 border-t-2 border-white border-opacity-50"></div>
-          </div>
-        ) : mintSuccess ? (
-          <ClaimCapsules />
-        ) : null}
-      </div>
-    </div>
-  </div>
-)}
-
-
-
 </section>
 
     

@@ -52,19 +52,33 @@ export default function Navbar() {
             </section>
 
              {/* Menú grande */}
-          <div className="flex flex-row items-center space-x-6 font-lexend font-bold">
+          <div className="flex flex-row items-center space-x-6 font-lexend font-bold text-white">
               <div className="hidden sm:block flex flex-row items-center justify-center space-x-6 font-lexend font-bold">
-              {/*
+              
               <a href="/">
                       Home
                   </a>
                   <a href="/mint">
                       Mint
                   </a>
-                  */}
+                  <a href="/profile">
+                      Profile
+                  </a>
+                  {/*
                   <a href="/canvas">
                       Build robot
                   </a>
+                  */}
+                  <a
+            href="https://boredonchain.gitbook.io/satoshi-robotics-docs"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+         
+          Docs →
+        </a>
+        
+        
                   {account?.address === adminAddress && (
                   <a href="/admin">
                       Dashboard
@@ -105,8 +119,16 @@ export default function Navbar() {
               {/*arriba*/}
               <div>
                   <div className="flex items-center justify-between px-4 py-4">
-                      <PiHandEye className="text-white text-6xl bg-blue-600 rounded-md p-2" />
-                      <button
+{/* Logo */}
+                <Link href={"/"}>
+                    <Image
+                        src="/m3ch4-logo.svg"
+                        alt="Logo"
+                        width={50}
+                        height={50}
+                        priority />
+                </Link>
+                                      <button
                           onClick={toggleMenu}
                           className="text-white hover:text-gray-400 focus:outline-none focus:text-white"
                       >
@@ -141,20 +163,27 @@ export default function Navbar() {
                 }} 
                 />
                   </div>
-                  {/*}
+                  
                   <Link href={'/'}>
-                <p className="rounded-md px-3 py-2 text-sm font-medium text-slate-700">Home</p>
+                <p className="rounded-md px-3 py-2 text-sm font-medium text-white">Home</p>
                 </Link>
                 <Link href={'/mint'}>
-                <p className="rounded-md px-3 py-2 text-sm font-medium text-slate-700">Mint</p>
+                <p className="rounded-md px-3 py-2 text-sm font-medium text-white">Mint</p>
                 </Link>
-                */}
+                <Link href={'/profile'}>
+                <p className="rounded-md px-3 py-2 text-sm font-medium text-white">Profile</p>
+                </Link>
+                {/*
                 <Link href={'/canvas'}>
                 <p className="rounded-md px-3 py-2 text-sm font-medium text-slate-700">Build robot</p>
                 </Link>
+                */}
+                <Link href={'https://boredonchain.gitbook.io/satoshi-robotics-docs'}>
+                <p className="rounded-md px-3 py-2 text-sm font-medium text-white">Docs →</p>
+                </Link>
                 {account?.address === adminAddress && (
                     <Link href={'/admin'}>
-                        <p className="rounded-md px-3 py-2 text-sm font-medium text-slate-700">Dashboard</p>
+                        <p className="rounded-md px-3 py-2 text-sm font-medium text-white">Dashboard</p>
                     </Link>
                 )}
                   </div>

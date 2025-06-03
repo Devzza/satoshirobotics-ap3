@@ -15,6 +15,8 @@ import { createWallet } from "thirdweb/wallets";
 import router from "next/router";
 import Image from 'next/image';
 import { getOwnedNFTs } from "thirdweb/extensions/erc1155";
+import TopBar from "../components/TopBar";
+
 
 
 const Canvas = () => {
@@ -525,6 +527,8 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
 
   return (
 <section className="w-full min-h-screen bg-[#0d0d0d] text-[#e5e5e5] font-lexend">
+        <TopBar message="We recommend using the desktop version. We're still working on the mobile version for a better experience." backgroundColor="#0303d1" textColor="#fff" />
+
 <NavBar />
   
     {/* If account not connected */}
