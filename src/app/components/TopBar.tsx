@@ -1,4 +1,5 @@
 import React from 'react';
+import { CSSProperties } from 'react';
 
 type Props = {
   message: string;
@@ -15,7 +16,7 @@ const TopBar: React.FC<Props> = ({
   fontSize = '1rem',
   fontWeight = 'normal',
 }) => {
-  const style = {
+  const style: CSSProperties = {
     backgroundColor: backgroundColor,
     color: textColor,
     fontSize: fontSize,
