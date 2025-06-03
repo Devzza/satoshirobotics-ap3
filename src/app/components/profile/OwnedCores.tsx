@@ -4,16 +4,19 @@ import { getNFTs, ownerOf, totalSupply } from "thirdweb/extensions/erc721";
 import { BASE_CONTRACT } from "../../../../constants/addresses";
 import { chain } from "@/app/chain";
 import { client } from "@/app/client";
-import { getContract } from "thirdweb";
+import { getContract, NFT } from "thirdweb";
 import { useReadContract,   useActiveAccount } from "thirdweb/react";
 import { useEffect, useState } from "react";
 import CoreCard from "./CoreCard";
 
 
 
+
+
 export default function OwnedCores() {
 
     const account = useActiveAccount();
+    
 
   const baseContract = getContract({
     client: client,
@@ -104,7 +107,22 @@ export default function OwnedCores() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {ownedBase.map((nft) => (
-            <CoreCard key={nft.id} nft={nft} baseContract={baseContract} refetch={getOwnedBase} />
+            <CoreCard key={nft.id} nft={{
+    ...nft,
+    metadata: {
+      name: nft.metadata.name || "Nombre Desconocido",
+      description: nft.metadata.description,
+      image: nft.metadata.image || nft.metadata.image_url || "URL_IMAGEN_POR_DEFECTO", // Priorizar image, luego image_url, luego valor por defecto
+      attributes: (nft.metadata.attributes as Record<string, unknown>)
+        ? Object.entries(nft.metadata.attributes as Record<string, unknown>).map(
+            ([trait_type, value]) => ({
+              trait_type,
+              value: String(value), // Asegurarse de que el valor sea un string
+            })
+          )
+        : [],
+    },
+  }} baseContract={baseContract} refetch={getOwnedBase} />
           ))}
         </div>
       )}

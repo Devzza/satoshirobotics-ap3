@@ -138,8 +138,12 @@ const { data: whitelistAllowanceAmount, isLoading: isWhitelistLoading } = useRea
   }, [isCurrentPhaseLoading, phase, account?.address, adminAddress, isWhitelistLoading, isWhitelistMintedLoading, isWhitelisted, hasMintedAllAllowed, whitelistMintedAmount]);
  
   // Calcular si se ha alcanzado el "sold out"
-  const isSoldOut = !isClaimSupplyLoading && !isTotalSupplyLoading && claimedSupply >= totalNFTSupply;
-
+const isSoldOut =
+  !isClaimSupplyLoading &&
+  !isTotalSupplyLoading &&
+  claimedSupply !== undefined &&
+  totalNFTSupply !== undefined &&
+  claimedSupply >= totalNFTSupply;
 
       const [isModalOpen, setIsModalOpen] = useState(false);
 
