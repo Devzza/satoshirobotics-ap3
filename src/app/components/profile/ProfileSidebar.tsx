@@ -98,49 +98,22 @@ export default function ProfileSidebar({
 
   {/* Aquí continúa tu menú */}
   <ul className="text-white">
-    {menuItems.map((item) => (
-      <li key={item.id}>
-        <div
-          onClick={() =>
-            item.children ? toggleSubmenu(item.id) : setSelected(item.id)
-          }
-          className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-[#1f1f1f] ${
-            selected === item.id ? "bg-[#1f1f1f]" : ""
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            {item.icon}
-            {expanded && <span>{item.label}</span>}
-          </div>
-          {expanded && item.children && (
-            <SlArrowDown
-              className={`transition-transform ${
-                openSubmenu === item.id ? "rotate-180" : ""
-              }`}
-            />
-          )}
+  {menuItems.map((item) => (
+    <li key={item.id}>
+      <div
+        onClick={() => setSelected(item.id)}
+        className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-[#1f1f1f] ${
+          selected === item.id ? "bg-[#1f1f1f]" : ""
+        }`}
+      >
+        <div className="flex items-center gap-4">
+          {item.icon}
+          {expanded && <span>{item.label}</span>}
         </div>
-
-        {/* Submenu */}
-        {item.children && openSubmenu === item.id && expanded && (
-          <ul className="ml-8">
-            {item.children.map((subItem) => (
-              <li
-                key={subItem.id}
-                onClick={() => setSelected(subItem.id)}
-                className={`flex items-center gap-3 px-2 py-2 cursor-pointer hover:bg-[#1a1a1a] rounded ${
-                  selected === subItem.id ? "bg-[#1a1a1a]" : ""
-                }`}
-              >
-                {subItem.icon}
-                <span>{subItem.label}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </li>
-    ))}
-  </ul>
+      </div>
+    </li>
+  ))}
+</ul>
   </div>
   {expanded && 
   <div className="flex flex-col justify-center items-center my-6 w-full px-6">
