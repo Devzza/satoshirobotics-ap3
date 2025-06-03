@@ -14,7 +14,6 @@ import { chain } from "../chain";
 import NavBar from "../components/NavBar";
 import { CiCircleMinus, CiCirclePlus } from "react-icons/ci";
 import { IoClose } from "react-icons/io5";
-import { ClaimCapsules } from "../components/mint/ClaimCapsuleModal";
 import { useMechas } from "@/context/MechasProvider";
 import TopBar from "../components/TopBar";
 
