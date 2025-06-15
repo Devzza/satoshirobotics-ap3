@@ -64,11 +64,11 @@ export default function Navbar() {
                   <a href="/profile">
                       Profile
                   </a>
-                  {/*
+                  
                   <a href="/canvas">
                       Build robot
                   </a>
-                  */}
+                  
                   <a
             href="https://boredonchain.gitbook.io/satoshi-robotics-docs"
           target="_blank"
@@ -173,11 +173,11 @@ export default function Navbar() {
                 <Link href={'/profile'}>
                 <p className="rounded-md px-3 py-2 text-sm font-medium text-white">Profile</p>
                 </Link>
-                {/*
+                
                 <Link href={'/canvas'}>
                 <p className="rounded-md px-3 py-2 text-sm font-medium text-slate-700">Build robot</p>
                 </Link>
-                */}
+                
                 <Link href={'https://boredonchain.gitbook.io/satoshi-robotics-docs'}>
                 <p className="rounded-md px-3 py-2 text-sm font-medium text-white">Docs →</p>
                 </Link>

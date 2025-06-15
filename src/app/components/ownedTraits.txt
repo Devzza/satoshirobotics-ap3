@@ -33,12 +33,10 @@ interface TraitsCardProps {
     setTempSelectedTrait: React.Dispatch<React.SetStateAction<Record<number, number>>>;
 }
 
-
 interface Attribute {
   trait_type: string;
   value: string;
 }
-
 
 export const TraitsCard: React.FC<TraitsCardProps> = ({
   ownedTraits,
@@ -112,8 +110,8 @@ const isSelected = (traitId: number) => {
       e.stopPropagation();
       handleSelectTrait(ownedTraits.id); // Solo seleccionamos el trait aquí
     }}
-    className={`cursor-pointer py-2 px-4 rounded-lg mt-4 hover:bg-blue-500 ${
-      isSelected(ownedTraits.id) ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-transparent border-3 border-blue-500 text-white'
+    className={`cursor-pointer py-2 px-4 rounded-lg mt-4 ${
+      isSelected(ownedTraits.id) ? 'bg-yellow-500 text-white' : 'bg-green-500 text-white'
     }`}
   >
     {isSelected(ownedTraits.id) ? 'Selected' : 'Select'}
@@ -123,15 +121,6 @@ const isSelected = (traitId: number) => {
       </div>
     );
   };
-
-
-
-
-
-
-
-
-
 
 
 
@@ -159,13 +148,6 @@ interface OwnedTraitsProps {
     }>>
 
   }
-
-  interface Trait {
-  metadata?: {
-    layer_type?: string;
-  };
-  name: string;
-}
   
   export const OwnedTraits = ({  
     tokenId, 
@@ -221,71 +203,43 @@ const TRAIT_TYPE_TO_SLOT: Record<string, number> = {
   const [ownedTraits, setOwnedTraits] = useState<Record<number, any[]>>({});
     const [isLoading, setIsLoading] = useState(false);
   
- const fetchTraits = async () => {
-  if (!account) return;
-  setIsLoading(true);
+  const fetchTraits = async () => {
+    if (!account) return;
+    setIsLoading(true);
+  
+    try {
+      const traits = await getOwnedNFTs({
+        contract: traitsContract,
+        start: 0,
+        address: account.address || "",
+      });
 
-  try {
-    const traits: any[] = await getOwnedNFTs({
-      contract: traitsContract,
-      start: 0,
-      address: account.address || "",
-    });
+      console.log("Owned NFTs:", traits);
+  
+      const filteredTraits: Record<number, any[]> = {};
 
-    console.log("Owned NFTs:", traits);
-
-    const filteredTraits: Record<number, any[]> = {};
-
-    console.log("traitTypes:", traitTypes); // ⚡️ LOG DE traitTypes
-
-    await Promise.all(
-      traitTypes.map(async (slot) => {
-        const traitsForSlot: any[] = [];
-
-        for (const trait of traits) {
-          try {
-            const uri = trait.metadata?.uri;
-            if (!uri) {
-              console.warn("Trait missing metadata URI", trait);
-              continue;
-            }
-
-            // Cargar el JSON desde la URI IPFS
-            const metadataUrl = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
-            const response = await fetch(metadataUrl);
-            const metadata = await response.json();
-
-            const layerType = metadata.layer_type;
-
-            if (!layerType || typeof layerType !== "string") {
-              console.warn("Trait missing layer_type or layer_type is not a string:", metadata);
-              continue;
-            }
-
-            const expectedSlot = TRAIT_TYPE_TO_SLOT[layerType];
-            console.log(`layerType: ${layerType}, expectedSlot: ${expectedSlot}, slot: ${slot}`);
-
-            if (expectedSlot === Number(slot)) {
-              traitsForSlot.push(trait);
-            }
-          } catch (err) {
-            console.error("Error processing trait:", err);
-          }
-        }
-
-        filteredTraits[Number(slot)] = traitsForSlot;
-      })
-    );
-
-    console.log("Filtered Traits:", filteredTraits);
-    setOwnedTraits(filteredTraits);
-  } catch (error) {
-    console.error("Error fetching NFTs:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+      traitTypes.forEach((slot) => {
+        filteredTraits[Number(slot)] = traits.filter((trait) => {
+          
+          const layerType = trait.metadata.layer_type; // ⚡ Ahora usamos 'layer_type'
+  
+          console.log(`Checking trait ${trait.metadata.name}: layer_type = ${layerType}`);
+          console.log(trait.metadata)
+  
+          const expectedSlot = TRAIT_TYPE_TO_SLOT[String(layerType)]; // Usamos layerType para encontrar el slot correcto
+  
+          return expectedSlot === Number(slot);
+        });
+      });
+  
+      console.log("Filtered Traits:", filteredTraits);
+      setOwnedTraits(filteredTraits);
+    } catch (error) {
+      console.error("Error fetching NFTs:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   useEffect(() => {
     fetchTraits();
@@ -321,21 +275,14 @@ const SLOT_TO_TRAIT_TYPE: Record<number, string> = Object.entries(TRAIT_TYPE_TO_
 
 
 // setOwnedTraitURIs y lo pasamos a parent
-
- const fetchOwnedTraitsMetadata = async () => {
-    console.log("fetchOwnedTraitsMetadata fue llamada!"); // ⚡️ LOG DE VERIFICACIÓN
-
+useEffect(() => {
+  const fetchOwnedTraitsMetadata = async () => {
     if (!traitsContract || Object.keys(ownedTraits).length === 0) return;
-
-      console.log("ownedTraits:", ownedTraits); // ⚡️ LOG DE ownedTraits
-
 
     const uris: { [key: number]: string | undefined } = {};
 
     for (const type of Object.keys(ownedTraits)) {
       const traitObject = ownedTraits[parseInt(type)]?.[0];
-        console.log(`traitObject for type ${type}:`, traitObject); // ⚡️ LOG DE traitObject
-
 
       if (traitObject != null) {
         // Extraer un tokenId seguro
@@ -343,9 +290,6 @@ const SLOT_TO_TRAIT_TYPE: Record<number, string> = Object.entries(TRAIT_TYPE_TO_
           typeof traitObject === "object"
             ? traitObject.id ?? traitObject.tokenId ?? traitObject[0]
             : traitObject;
-
-              console.log(`tokenId for type ${type}:`, tokenId); // ⚡️ LOG DE tokenId
-
 
         if (tokenId != null) {
           try {
@@ -372,8 +316,6 @@ const SLOT_TO_TRAIT_TYPE: Record<number, string> = Object.entries(TRAIT_TYPE_TO_
             }
           } catch (error) {
             console.error(`Error fetching metadata for tokenId ${tokenId}:`, error);
-              console.error("Error details:", error); // ⚡️ LOG DEL ERROR COMPLETO
-
           }
         }
       }
@@ -389,10 +331,8 @@ const SLOT_TO_TRAIT_TYPE: Record<number, string> = Object.entries(TRAIT_TYPE_TO_
     });
   };
 
- useEffect(() => {
-    fetchOwnedTraitsMetadata(); // Llama a la función al montar el componente
-  }, [ownedTraits, traitsContract]);
-
+  fetchOwnedTraitsMetadata();
+}, [ownedTraits, traitsContract]);
 
    
 
@@ -455,14 +395,14 @@ return (
 
     onClose();
   }}
-  className="bg-white text-black py-2 px-4 rounded-lg mt-4 cursor-pointer"
+  className="bg-green-500 text-white py-2 px-4 rounded-lg mt-4 cursor-pointer"
   disabled={Object.keys(tempSelectedTrait).length === 0}
 >
   Equip Selected Trait
 </button>
 
 
-          <button
+    <button
       onClick={fetchTraits}
       className="bg-[#000000] text-white py-2 px-4 rounded-lg mt-4 ml-4 self-center cursor-pointer"
     >

@@ -589,14 +589,14 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
             <p className="text-gray-500 font-bold animate-pulse">Loading NFTs...</p>
           ) : (
             ownedBase.map((nft) => (
-              <><div
+              <div
                 key={nft.id}
                 className={`cursor-pointer bg-black border-2 p-2 rounded-xl ${selectedTokenId === Number(nft.id) ? "border-blue-500" : "border-gray-300"}`}
                 onClick={() => setSelectedTokenId(Number(nft.id))}
               >
                 <OwnedSimians nft={nft} driverName={driverName} />
               </div>
-             </>
+             
               
             ))
           )}
@@ -746,7 +746,7 @@ const canUploadDriverImage = effectiveEquippedTraits[4] !== null;
       {/*Modal*/}
     {isModalOpen && selectedSlot !== null && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-  <div className="bg-white p-6 rounded-lg max-h-[90vh] w-full max-w-2xl overflow-y-auto text-black">
+  <div className="bg-[#0d0d0d] p-6 rounded-lg max-h-[90vh] w-full max-w-2xl overflow-y-auto text-white">
           <OwnedTraits
             tokenId={selectedTokenId}
             traitTypes={Object.keys(equippedTraits)}

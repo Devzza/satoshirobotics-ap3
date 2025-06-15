@@ -23,9 +23,11 @@ import { getContractMetadata } from "thirdweb/extensions/common";
 import { FaArrowUpRightFromSquare, FaBars } from "react-icons/fa6";
 import ProfileSidebar from "../components/profile/ProfileSidebar";
 import OwnedCores from "../components/profile/OwnedCores";
+import OwnedCaps from "../components/profile/OwnedCaps";
 import { SlMenu } from "react-icons/sl";
 import { IoCloseOutline } from "react-icons/io5";
 import TopBar from "../components/TopBar";
+import OwnedParts from "../components/profile/OwnedParts";
 
 
 
@@ -53,6 +55,10 @@ const Profile = () => {
     switch (selected) {
         case "ownedCores":
           return <OwnedCores />;
+        case "ownedParts":
+          return <OwnedParts />;
+        case "ownedCaps":
+          return <OwnedCaps />;
       default:
         return <OwnedCores />;
     }

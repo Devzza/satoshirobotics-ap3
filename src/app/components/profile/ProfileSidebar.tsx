@@ -10,10 +10,14 @@ import { client } from "@/app/client";
 import { TbRobot } from "react-icons/tb";
 import { IoCloseOutline } from "react-icons/io5";
 import { IoIosCloseCircleOutline } from "react-icons/io";
+import { BiMicrochip } from "react-icons/bi";
+
 
 
 const menuItems = [
   { id: "ownedCores", label: "Robots", icon: <TbRobot />},
+  { id: "ownedCaps", label: "Capsules", icon: <BiMicrochip />},
+  { id: "ownedParts", label: "Parts", icon: <SlSocialSteam />},
   // Puedes añadir más secciones principales aquí si quieres
 ];
 

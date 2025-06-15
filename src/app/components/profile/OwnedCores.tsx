@@ -88,15 +88,22 @@ export default function OwnedCores() {
         Refetch
       </button>
       </div>
-      <div>
-       <a
+      <div className="flex flex-row items-center gap-4">
+        <a href="/mint" target="_blank" rel="noopener noreferrer">
+            Mint
+          </a>
+          
+            <a href="/canvas" target="_blank" rel="noopener noreferrer">
+            Build
+          </a>
+          
+          <a
             href="https://boredonchain.gitbook.io/satoshi-robotics-docs"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-         
-          Docs →
-        </a>
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Docs →
+          </a>
         </div>
       </div>
 

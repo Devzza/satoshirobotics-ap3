@@ -4,6 +4,8 @@ import { MediaRenderer, useActiveAccount, useReadContract, useSendTransaction } 
 import { BASE_CONTRACT, TRAITS_CONTRACT } from '../../../constants/addresses';
 import { chain } from '../chain';
 import { client } from '../client';
+import { CgDanger } from 'react-icons/cg';
+import { IoClose } from 'react-icons/io5';
 
 interface Trait {
   layer_type: string;
@@ -84,7 +86,7 @@ const NFTCanvas: React.FC<NFTCanvasProps> = ({
   setUserImageIPFS,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [baseImage, setBaseImage] = useState<string>("");
+const [baseImage, setBaseImage] = useState<string>("https://ipfs.io/ipfs/bafybeicrzywzy4vksfulrvh72pout4igojac57lbedavzju2a3yu7j3mfa/ap3core.png");
   const [loading, setLoading] = useState(true);
   const [equippedTraits, setEquippedTraits] = useState<Record<number, number | null>>({}); // Definir con índice numérico
   const [traitURIs, setTraitURIs] = useState<{ [key: number]: string | undefined }>({}); // Estado local para traitURIs
@@ -373,7 +375,7 @@ useEffect(() => {
     setUserImageURL(null);
   }
 }, [userImage]);
-      
+
 
 
 
@@ -539,7 +541,6 @@ const drawNFTOnCanvas = async () => {
 
   setLoading(false);
 };
-
 
 
 
@@ -857,7 +858,9 @@ setIsSettingURI(true);
     setIsSettingURI(false); // Resetear para evitar que brinque a otro paso
     setIsUpdating(false);   // Asegurar que no quede en estado de actualización previa
     setUpdatedNft(null);
+    setHasAgreed(false);
   };
+
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -1018,7 +1021,20 @@ const approveContract = () => {
       setResetTraits(false); // Resetear el estado de reseteo
     }
   }, [resetTraits, selectedTokenId]);
-  
+
+
+
+
+
+  const [hasAgreed, setHasAgreed] = useState(false);
+
+  useEffect(() => {
+  if (!loading && isModalOpen && !hasAgreed) {
+    setHasAgreed(true);
+  }
+}, [loading]);
+
+ 
 
 
   return (
@@ -1036,111 +1052,174 @@ const approveContract = () => {
 
 <section className="flex flex-row justify-between">
 <div>
-{/* Botón para abrir la modal */}
 <button
-      onClick={openModal}
-      disabled={
-        !(
-          (equippedTraits?.[1] !== undefined && equippedTraits?.[1] !== null) ||
-          (selectedTraits?.[1] !== undefined && selectedTraits?.[1] !== null) ||
-          (!hasTraits && baseImage)
-        ) || loading
-      }
-      className={`
-        my-4 px-4 py-2 rounded-md transition
-        ${
-          loading
-            ? "bg-gray-300 text-gray-600 cursor-not-allowed" // Estilo cuando está loading
-            : (equippedTraits?.[1] !== undefined && equippedTraits?.[1] !== null) ||
-              (selectedTraits?.[1] !== undefined && selectedTraits?.[1] !== null) ||
-              (!hasTraits && baseImage)
-            ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer" // Estilo cuando está habilitado
-            : "bg-gray-300 text-gray-600 cursor-not-allowed" // Estilo cuando está deshabilitado
-        }
-      `}
-    >
-      Assemble
-    </button>
+  onClick={openModal}
+  disabled={
+    !(
+      (
+        (equippedTraits?.[1] !== undefined && equippedTraits?.[1] !== null) ||
+        (selectedTraits?.[1] !== undefined && selectedTraits?.[1] !== null)
+      ) &&
+      (
+        (equippedTraits?.[4] !== undefined && equippedTraits?.[4] !== null) ||
+        (selectedTraits?.[4] !== undefined && selectedTraits?.[4] !== null)
+      ) ||
+      (!hasTraits && baseImage)
+    ) || loading 
+  }
+  className={`
+    my-4 px-4 py-2 rounded-md transition
+    ${
+      loading
+        ? "bg-gray-300 text-gray-600 cursor-not-allowed" // Estilo cuando está loading
+        : (
+            (
+              (equippedTraits?.[1] !== undefined && equippedTraits?.[1] !== null) ||
+              (selectedTraits?.[1] !== undefined && selectedTraits?.[1] !== null)
+            ) &&
+            (
+              (equippedTraits?.[4] !== undefined && equippedTraits?.[4] !== null) ||
+              (selectedTraits?.[4] !== undefined && selectedTraits?.[4] !== null)
+            ) ||
+            (!hasTraits && baseImage)
+          )
+        ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer" // Estilo cuando está habilitado
+        : "bg-gray-300 text-gray-600 cursor-not-allowed" // Estilo cuando está deshabilitado
+    }
+  `}
+>
+  Assemble
+</button>
 
 
       {/* Modal */}
-      {isModalOpen && (
+    {isModalOpen && (
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-    <div className="bg-white p-6 rounded-lg w-96 relative text-black">
-      <button onClick={closeModal} className="absolute top-2 right-2 text-gray-500">X</button>
-
-      {isUploading ? (
-  // Paso 1: Upload Metadata
-  <>
-    <h1 className="text-xl font-semibold mb-4">Step 1: Upload Metadata</h1>
-    <button
-      onClick={handleUpload}
-      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
-      disabled={isUploading}
-    >
-      {isUploading ? "Uploading..." : "Upload to IPFS"}
-    </button>
-  </>
-) : updatedNft ? (
-  // Paso 4: NFT actualizado
-  <>
-    <h1 className="text-xl font-semibold mb-4">Robot #{selectedTokenId} updated!</h1>
-    <MediaRenderer
-      client={client}
-      src={updatedNft.metadata.image}
-      className="shadow-[5px_5px_0px_0px_rgba(53,35,65)] border-4 border-solid border-[#352341]"
-      style={{ borderRadius: "15px", width: "200px", height: "200px", marginBottom: "20px" }} 
-    /> 
-    <h2>{updatedNft.metadata.name}</h2>
-   
-  </>
-) : isUpdating ? (
-  // Paso 3: Esperando actualización on-chain
-  <>
-    <h1 className="text-xl font-semibold mb-4">Step 3: Updating your Robot on-chain</h1>
-    <div>Wait while your Robot is updating...</div>
-  </>
-) : isSettingURI ? (
-  // Paso 2: Establecer URI
-  <>
-    <h1 className="text-xl font-semibold mb-4">Step 2: Assemble your Robot</h1>
-
-    {!isApproved ? (
+    <div className="bg-[#0d0d0d] p-6 rounded-lg w-96 relative text-white">
       <button
-        onClick={approveContract}
-        className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition"
+        onClick={closeModal}
+        className="absolute top-2 right-2 text-gray-500 text-xl cursor-pointer"
       >
-        Approve NFTs
+        <IoClose />
       </button>
-    ) : (
-      <button
-        onClick={() => {
-          console.log("Botón 'Establecer URI de Token' clickeado");
-          onClickSetUri();
-        }}
-        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
-      >
-        Update metadata
-      </button>
-    )}
-  </>
-) : (
-  // Paso 1 (por defecto si no hay flags activos)
-  <>
-    <h1 className="text-xl font-semibold mb-4">Step 1: Upload Metadata</h1>
-    <button
-      onClick={handleUpload}
-      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
-      disabled={isUploading}
-    >
-      Upload to IPFS
-    </button>
-  </>
-)}
 
+      {updatedNft ? (
+        // ✅ Paso 4: NFT actualizado
+        <>
+          <h1 className="text-xl font-semibold mb-4">Robot #{selectedTokenId} updated!</h1>
+          <MediaRenderer
+            client={client}
+            src={updatedNft.metadata.image}
+            className="shadow-[5px_5px_0px_0px_rgba(53,35,65)] border-4 border-solid border-[#352341]"
+            style={{ borderRadius: "15px", width: "200px", height: "200px", marginBottom: "20px" }}
+          />
+          <h2>{updatedNft.metadata.name}</h2>
+        </>
+      ) : isUpdating ? (
+        // ✅ Paso 3: Confirmación on-chain
+        <>
+          <h1 className="text-xl font-semibold mb-4">Step 3: Updating your Robot on-chain</h1>
+          <div>Wait while your Robot is updating...</div>
+        </>
+      ) : isSettingURI ? (
+        // ✅ Paso 2: Establecer URI
+        <>
+          <h1 className="text-xl font-semibold mb-4">Step 2: Assemble your Robot</h1>
+          {!isApproved ? (
+            <button
+              onClick={approveContract}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+            >
+              Approve NFTs
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                console.log("Botón 'Establecer URI de Token' clickeado");
+                onClickSetUri();
+              }}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+            >
+              Update metadata
+            </button>
+          )}
+        </>
+      ) : !hasAgreed ? (
+        // ✅ Paso 0: Acuerdo inicial
+        <>
+          <div className="flex flex-row gap-2 items-center">
+            <h1 className="text-xl font-semibold mb-4 text-[#ff6700]">
+              <CgDanger />
+            </h1>
+            <h1 className="text-xl font-semibold mb-4">Read carefully</h1>
+          </div>
+          <p className="mb-4">
+            When you equip a Robot Part to your Robot, it will be transferred to the contract until
+            you unequip it, after which it will be returned to your wallet.
+          </p>
+          <p className="mb-4">
+            If you transfer or sell a Robot with equipped Robot Parts, you will not be able to
+            recover those Robot Parts. The new owner can unequip them and obtain them at any time.
+          </p>
+          <button
+            onClick={async () => {
+              await drawNFTOnCanvas(); // renderizar imagen
+              setHasAgreed(true); // avanzar a siguiente paso
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition cursor-pointer"
+          >
+            Understood
+          </button>
+        </>
+      ) : (
+        // ✅ Paso 1: Upload metadata
+        <>
+          <h1 className="text-xl font-semibold mb-4">Step 1: Upload Metadata</h1>
+          <button
+            onClick={handleUpload}
+            disabled={
+              !(
+                (
+                  (equippedTraits?.[1] !== undefined && equippedTraits?.[1] !== null) ||
+                  (selectedTraits?.[1] !== undefined && selectedTraits?.[1] !== null)
+                ) &&
+                (
+                  (equippedTraits?.[4] !== undefined && equippedTraits?.[4] !== null) ||
+                  (selectedTraits?.[4] !== undefined && selectedTraits?.[4] !== null)
+                ) ||
+                (!hasTraits && baseImage)
+              ) || loading || isUploading
+            }
+            className={`
+              my-4 px-4 py-2 rounded-md transition
+              ${
+                (loading || isUploading)
+                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  : (
+                      (
+                        (equippedTraits?.[1] !== undefined && equippedTraits?.[1] !== null) ||
+                        (selectedTraits?.[1] !== undefined && selectedTraits?.[1] !== null)
+                      ) &&
+                      (
+                        (equippedTraits?.[4] !== undefined && equippedTraits?.[4] !== null) ||
+                        (selectedTraits?.[4] !== undefined && selectedTraits?.[4] !== null)
+                      ) ||
+                      (!hasTraits && baseImage)
+                    )
+                  ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+                  : "bg-gray-300 text-gray-600 cursor-not-allowed"
+              }
+            `}
+          >
+            {isUploading ? "Uploading..." : loading ? "Rendering..." : "Upload to IPFS"}
+          </button>
+        </>
+      )}
     </div>
   </div>
 )}
+
+
 
     </div>
 <div>
@@ -1157,14 +1236,17 @@ Download
   (!hasTraits && baseImage)
 ) && (
   <p className="text-sm text-gray-600 mb-2">
-    Equip a Background to update your Robot.
+    Equip Background and Body to update your Robot.
   </p>
 )}
 
+{/*
 <div>
   <p>Traits to Equip: {toEquip.map((id) => id.toString()).join(", ")}</p>
   <p>Traits to Unequip: {toUnequip.map((id) => id.toString()).join(", ")}</p>
 </div>
+*/}
+
     </main>
   );
 };

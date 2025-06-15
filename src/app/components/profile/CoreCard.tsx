@@ -35,7 +35,7 @@ const tokenId = BigInt(nft.id); // si necesitas que sea bigint
  
 
   // Función para convertir IPFS a gateway público
-  const resolveImage = (url: string) => {
+  const resolveImage = (url: string | undefined) => {
     if (!url) return "";
     return url.startsWith("ipfs://")
       ? url.replace("ipfs://", "https://ipfs.io/ipfs/")
@@ -43,8 +43,6 @@ const tokenId = BigInt(nft.id); // si necesitas que sea bigint
   };
 
   // Transfer
-
-
 
 /*
 
@@ -61,13 +59,10 @@ const tokenId = BigInt(nft.id); // si necesitas que sea bigint
   };
 */
 
-
     const handleAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTransferAddress(event.target.value);
   };
   
-
-
     const closeModal = () => {
     setIsModalOpen(false);
     refetch();
@@ -78,7 +73,7 @@ const tokenId = BigInt(nft.id); // si necesitas que sea bigint
     <div className="bg-[#1a1a1a] rounded-2xl shadow-md overflow-hidden border border-[#333] text-white">
 <MediaRenderer
             client={client}
-            src={nft.metadata.image}
+  src={(nft.metadata.image)}
             className="w-full rounded-t-2xl mb-4"
             />
       <div className="p-4">
