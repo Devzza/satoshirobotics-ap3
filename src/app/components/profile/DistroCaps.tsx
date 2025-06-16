@@ -14,6 +14,7 @@ import Image from "next/image";
  interface DistroCapsProps {
 capsDistro: ContractOptions<any, any>;    
 baseContract: any;
+refetch:  () => Promise<void>;
 getOwnedBase: () => Promise<void>
     capsContract: any;
     capsuleData: {
@@ -22,7 +23,7 @@ getOwnedBase: () => Promise<void>
       claimed: boolean;
     }[];
   }
-export default function DistroCaps({ capsDistro, capsContract, baseContract, capsuleData, getOwnedBase }: DistroCapsProps) {
+export default function DistroCaps({ capsDistro, capsContract, baseContract, capsuleData, refetch, getOwnedBase }: DistroCapsProps) {
 
         const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -31,6 +32,7 @@ export default function DistroCaps({ capsDistro, capsContract, baseContract, cap
 }; 
         const closeModal = () => {
   setIsModalOpen(false);  // Cerrar la modal
+  refetch();
 };
 
   const handleModalContentClick = (e: React.MouseEvent) => {

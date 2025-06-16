@@ -239,20 +239,15 @@ export default function OwnedCaps() {
           baseContract={baseContract}
           capsContract={capsContract}
           capsuleData={capsuleData}
+          refetch={getOwnedCaps}
           getOwnedBase={getOwnedBase}
         />
       )}
     </div>
   ) : <div>
-      {ownedBase.length > 0 && (
-        <DistroCaps
-          capsDistro={capsDistro}
-          baseContract={baseContract}
-          capsContract={capsContract}
-          capsuleData={capsuleData}
-          getOwnedBase={getOwnedBase}
-        />
-      )}
+      <p>No capsules to claim</p>
+
+      
     </div>}
 </div>
 

@@ -93,16 +93,19 @@ const [isModalOpen, setIsModalOpen] = useState(false);
 
       {isOpening ? (
         <div className="flex flex-col items-center">
-          <p className="text-lg text-blue-600 font-semibold mb-4">Opening Capsule...</p>
+          <p className="text-lg text-white font-semibold mb-4">Opening Capsule...</p>
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
         </div>
       ) : (
         <div>
-          <h2 className="text-xl font-bold text-center text-blue-600 mb-4">You got:</h2>
+          <h2 className="text-xl font-bold text-center text-white mb-4">Capsule opened!</h2>
+          
+          {/*
           <ul className="space-y-2">
               <CapsRewards />
         
           </ul>
+          */}
         </div>
       )}
     </div>
