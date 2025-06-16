@@ -83,7 +83,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
         
       {isModalOpen && (
   <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex flex-col items-center justify-center px-4">
-    <div className="bg-white p-6 rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto relative">
+    <div className="bg-[#0d0d0d] p-6 rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto relative">
       <button
         className="absolute top-4 right-4 text-xl text-gray-700"
         onClick={() => setIsModalOpen(false)}

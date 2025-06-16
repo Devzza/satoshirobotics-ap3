@@ -7,6 +7,9 @@ import { client } from "@/app/client";
 import { ContractOptions, getContract, NFT, prepareContractCall } from "thirdweb";
 import { useReadContract,   useActiveAccount, TransactionButton, MediaRenderer } from "thirdweb/react";
 import { useEffect, useState } from "react";
+import { IoClose } from "react-icons/io5";
+import Image from "next/image";
+
 
  interface DistroCapsProps {
 capsDistro: ContractOptions<any, any>;    
@@ -35,11 +38,12 @@ export default function DistroCaps({ capsDistro, capsContract, baseContract, cap
   };
 
 
+  
     
     
     return (
       <div>
-      
+      <div className="flex flex-col justify-center items-center">
           <p>You have Capsules to claim!</p>
            <button
               onClick={openModal}
@@ -47,16 +51,28 @@ export default function DistroCaps({ capsDistro, capsContract, baseContract, cap
             >
               Claim
             </button>
+            </div>
           
            {/*Modal*/}
      {isModalOpen && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={closeModal}>
-  <div className="bg-white p-6 rounded-lg max-h-[90vh] w-full max-w-2xl overflow-y-auto text-black" onClick={handleModalContentClick}
->
+  <div className="bg-[#0d0d0d] p-6 rounded-lg max-h-[90vh] w-full max-w-2xl overflow-y-auto text-white" onClick={handleModalContentClick}>
+
+  <div className="flex justify-end"><button className="cursor-pointer text-lg" onClick={closeModal}><IoClose /></button></div>
+
+  <div><h1 className="font-bold text-xl">Claim your Capsules:</h1></div>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-4">
             {capsuleData.map((capsule) => (
               <div key={capsule.tokenId.toString()}>
-                <p>Token ID: {capsule.tokenId.toString()}</p>
-                <p>Claimed: {capsule.claimed ? "Yes" : "No"}</p>
+                <div className="bg-[#1a1a1a] text-white rounded-xl">
+                  <div>
+                    <img src="/capsule.png" alt="Capsule image" className="rounded-t-xl"/>
+
+          </div>
+          <div className="flex flex-col gap-4 p-4">
+
+                <p>Capsule #{capsule.tokenId.toString()}</p>
                 <TransactionButton
                   transaction={() =>
                     prepareContractCall({
@@ -69,7 +85,7 @@ export default function DistroCaps({ capsDistro, capsContract, baseContract, cap
                     alert("Capsule claimed!");
                     getOwnedBase();
                   }}
-                  className={`w-full mt-2 px-4 py-2 rounded-xl transition ${
+                  className={`w-1/3 mt-2 px-4 py-2 rounded-xl transition ${
                     capsule.claimed
                       ? "bg-gray-400 cursor-not-allowed text-white"
                       : "bg-blue-600 hover:bg-blue-700 text-white"
@@ -78,14 +94,13 @@ export default function DistroCaps({ capsDistro, capsContract, baseContract, cap
                 >
                   {capsule.claimed ? "Already Claimed" : "Claim"}
                 </TransactionButton>
+                </div>
+                </div>
+
               </div>
             ))}
-            <button
-              onClick={closeModal}
-              className="mt-2 px-4 py-2 bg-gray-200 rounded-lg"
-            >
-              Close
-            </button>
+            </div>
+            
           </div>
         </div>
       )}

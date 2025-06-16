@@ -203,7 +203,7 @@ export default function OwnedCaps() {
       {/* Refetch Button */}
       <button
         onClick={handleRefetchClick}
-        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2 cursor-pointer"
       >
         Refetch
       </button>
@@ -228,28 +228,43 @@ export default function OwnedCaps() {
       </div>
 
 
-   <div>
-          {hasCapsuleToClaim && (
-
-        <div>
-                    {ownedCaps.map((nft) => (
-          <DistroCaps
-            capsDistro={capsDistro}
-            baseContract={baseContract}
-            capsContract={capsContract}
-            capsuleData={capsuleData}
-            getOwnedBase={getOwnedBase}
-          />
-                    ))}
-          </div>
-          )}
+<div className="flex flex-col bg-[#1a1a1a] w-1/2 rounded-xl p-4 justify-center items-center">
+  {isLoadingBase ? (
+    <div>Checking Capsules to claim...</div> // Reemplaza esto con tu componente de loader
+  ) : hasCapsuleToClaim ? (
+    <div>
+      {ownedBase.length > 0 && (
+        <DistroCaps
+          capsDistro={capsDistro}
+          baseContract={baseContract}
+          capsContract={capsContract}
+          capsuleData={capsuleData}
+          getOwnedBase={getOwnedBase}
+        />
+      )}
     </div>
+  ) : <div>
+      {ownedBase.length > 0 && (
+        <DistroCaps
+          capsDistro={capsDistro}
+          baseContract={baseContract}
+          capsContract={capsContract}
+          capsuleData={capsuleData}
+          getOwnedBase={getOwnedBase}
+        />
+      )}
+    </div>}
+</div>
 
 <div className="flex flex-col justify-start">
       {isLoadingCaps ? (
-        <p>Loading Capsules...</p>
+      <div className="flex flex-col gap-4 justify-center items-center h-screen">
+        <p>Loading Capsules...</p></div>
       ) : ownedCaps.length === 0 ? (
+              <div className="flex flex-col gap-4 justify-center items-center h-screen">
+
         <p>No Capsules to open.</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {ownedCaps.map((nft) => (
