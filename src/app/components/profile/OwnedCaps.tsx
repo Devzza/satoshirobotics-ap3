@@ -1,6 +1,6 @@
 "use client";
 
-import { getNFTs, ownerOf, totalSupply } from "thirdweb/extensions/erc721";
+import { getNFTs, getOwnedNFTs, ownerOf, totalSupply } from "thirdweb/extensions/erc721";
 import { BASE_CONTRACT, CAPSULES_CONTRACT, DISTRO_CONTRACT } from "../../../../constants/addresses";
 import { chain } from "@/app/chain";
 import { client } from "@/app/client";
@@ -30,35 +30,19 @@ export default function OwnedCaps() {
          const [isLoadingBase, setIsLoadingBase] = useState(false); // Estado de carga
     
          const getOwnedBase = async () => {
-            setIsLoadingBase(true); // Activar loading antes de la consulta
-             let ownedBase: NFT[] = [];
-             
-             try {
-                 const totalNFTSupply = await totalSupply({ contract: baseContract });
-     
-                 const nfts = await getNFTs({
-                     contract: baseContract,
-                     start: 0,
-                     count: parseInt(totalNFTSupply.toString()),
-                 });
-     
-                 for (let nft of nfts) {
-                     const owner = await ownerOf({
-                         contract: baseContract,
-                         tokenId: nft.id,
-                     });
-                     if (owner === account?.address) {
-                        ownedBase.push(nft);
-                     }
-                 }
-     
-                 setOwnedBase(ownedBase);
-             } catch (error) {
-                 console.error("Error fetching NFTs:", error);
-             }
-     
-             setIsLoadingBase(false); // Desactivar loading después de la consulta
-         };
+  setIsLoadingBase(true);
+  try {
+    const nfts = await getOwnedNFTs({
+      contract: baseContract,
+      owner: account?.address!,
+    });
+
+    setOwnedBase(nfts);
+  } catch (error) {
+    console.error("Error fetching owned NFTs:", error);
+  }
+  setIsLoadingBase(false);
+};
     
          useEffect(() => {
             if (account) {
@@ -84,35 +68,20 @@ export default function OwnedCaps() {
      const [isLoadingCaps, setIsLoadingCaps] = useState(false); // Estado de carga
 
      const getOwnedCaps = async () => {
-        setIsLoadingCaps(true); // Activar loading antes de la consulta
-         let ownedCaps: NFT[] = [];
-         
-         try {
-             const totalNFTSupply = await totalSupply({ contract: capsContract });
- 
-             const nfts = await getNFTs({
-                 contract: capsContract,
-                 start: 0,
-                 count: parseInt(totalNFTSupply.toString()),
-             });
- 
-             for (let nft of nfts) {
-                 const owner = await ownerOf({
-                     contract: capsContract,
-                     tokenId: nft.id,
-                 });
-                 if (owner === account?.address) {
-                    ownedCaps.push(nft);
-                 }
-             }
- 
-             setOwnedCaps(ownedCaps);
-         } catch (error) {
-             console.error("Error fetching NFTs:", error);
-         }
- 
-         setIsLoadingCaps(false); // Desactivar loading después de la consulta
-     };
+  setIsLoadingCaps(true);
+  try {
+    const nfts = await getOwnedNFTs({
+      contract: capsContract,
+      owner: account?.address!,
+    });
+
+    setOwnedCaps(nfts);
+  } catch (error) {
+    console.error("Error fetching owned NFTs:", error);
+  }
+  setIsLoadingCaps(false);
+};
+
 
      useEffect(() => {
         if (account) {
@@ -228,7 +197,7 @@ export default function OwnedCaps() {
       </div>
 
 
-<div className="flex flex-col bg-[#1a1a1a] w-1/2 rounded-xl p-4 justify-center items-center">
+<div className="flex flex-col bg-[#1a1a1a] w-1/2 rounded-xl p-4 justify-center items-center mb-8">
  {isLoadingBase ? (
   <div>Checking Capsules to claim...</div>
 ) : ownedBase.length > 0 ? (
@@ -262,7 +231,7 @@ export default function OwnedCaps() {
         <p>No Capsules to open.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {ownedCaps.map((nft) => (
             <CapsCard key={nft.id} nft={nft} capsContract={capsContract} refetch={getOwnedCaps} />
           ))}

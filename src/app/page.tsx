@@ -20,10 +20,10 @@ export default function Home() {
         <div className="bg-blue-200 p-4 rounded-lg">
           <p>We recommend using the desktop version. We're still working on the mobile version for a better experience.</p>
         </div>
-
+<div className="flex flex-row items-center justify-between w-full">
         <div className="flex gap-4 items-center flex-col sm:flex-row">
           <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+            className="rounded-lg border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
             href="/mint"
             target="_blank"
             rel="noopener noreferrer"
@@ -31,7 +31,17 @@ export default function Home() {
             Go to Mint
           </a>
           <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
+            className="rounded-lg border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+            href="/profile"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Profile
+          </a>
+        </div>
+        <div>
+          <a
+            className="rounded-lg border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
             href="https://boredonchain.gitbook.io/satoshi-robotics-docs"
             target="_blank"
             rel="noopener noreferrer"
@@ -39,6 +49,7 @@ export default function Home() {
             Read our Docs
           </a>
         </div>
+</div>
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center bg-black p-4 rounded-lg">
         <a
