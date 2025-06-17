@@ -229,26 +229,27 @@ export default function OwnedCaps() {
 
 
 <div className="flex flex-col bg-[#1a1a1a] w-1/2 rounded-xl p-4 justify-center items-center">
-  {isLoadingBase ? (
-    <div>Checking Capsules to claim...</div> // Reemplaza esto con tu componente de loader
-  ) : hasCapsuleToClaim ? (
-    <div>
-      {ownedBase.length > 0 && (
-        <DistroCaps
-          capsDistro={capsDistro}
-          baseContract={baseContract}
-          capsContract={capsContract}
-          capsuleData={capsuleData}
-          refetch={getOwnedCaps}
-          getOwnedBase={getOwnedBase}
-        />
-      )}
-    </div>
-  ) : <div>
-      <p>No capsules to claim</p>
+ {isLoadingBase ? (
+  <div>Checking Capsules to claim...</div>
+) : ownedBase.length > 0 ? (
+   hasCapsuleToClaim ? (
+    <DistroCaps
+      capsDistro={capsDistro}
+      baseContract={baseContract}
+      capsContract={capsContract}
+      capsuleData={capsuleData}
+      refetch={getOwnedCaps}
+      getOwnedBase={getOwnedBase}
+    />
+  ) : (
+    <div>Loading Capsules to claim...</div>
+  )
+) : (
+  <div>
+    <p>No capsules to claim</p>
+  </div>
+)}
 
-      
-    </div>}
 </div>
 
 <div className="flex flex-col justify-start">
