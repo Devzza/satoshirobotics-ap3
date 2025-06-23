@@ -1126,12 +1126,15 @@ const approveContract = () => {
         <>
           <h1 className="text-xl font-semibold mb-4">Step 2: Assemble your Robot</h1>
           {!isApproved ? (
-            <button
-              onClick={approveContract}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
-            >
-              Approve NFTs
-            </button>
+            <><p>
+              You need to aprove the main contract to interact with your Robot Parts.
+              </p>
+              <button
+                            onClick={approveContract}
+                            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+                          >
+                            Approve NFTs
+                          </button></>
           ) : (
             <button
               onClick={() => {

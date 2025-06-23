@@ -2,7 +2,7 @@
 
 import { client } from "@/app/client";
 import React, { useEffect, useState } from "react";
-import { MediaRenderer, useReadContract } from "thirdweb/react";
+import { MediaRenderer, useActiveAccount, useReadContract } from "thirdweb/react";
 import { TRAITS_CONTRACT } from "../../../../constants/addresses";
 import { getContract, readContract } from "thirdweb";
 import { chain } from "@/app/chain";
@@ -22,6 +22,9 @@ type Props = {
   
 
   export default function PartsCard({ nft }: Props) {
+
+const account = useActiveAccount();
+
     const { name, image, description, attributes } = nft.metadata;
 
           const traitsContract = getContract({
@@ -44,14 +47,27 @@ type Props = {
     params: [BigInt(nft.id)],
 });
 
+// Fetch user's balance for this tokenId
+  const { data: balance, isLoading: isBalanceLoading } = useReadContract({
+    contract: traitsContract,
+    method: "function balanceOf(address account, uint256 id) view returns (uint256)",
+    params: [account?.address || "", BigInt(nft.id)],
+  });
+
 
   return (
     <div className="bg-[#1a1a1a] rounded-lg shadow-md overflow-hidden border border-[#333] text-white">
-<MediaRenderer
-            client={client}
-            src={nft.metadata.image}
-            className="w-full rounded-t-lg mb-4"
-            />
+      <div className="relative">
+        <MediaRenderer
+          client={client}
+          src={nft.metadata.image}
+          className="w-full rounded-t-lg mb-4"
+        />
+        {/* Balance bubble in the upper-right corner */}
+        <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-semibold rounded-full px-2 py-1 shadow-md">
+          {isBalanceLoading ? "..." : balance?.toString() || "0"}
+        </div>
+      </div>
       <div className="p-4">
         <div className="flex flex-row justify-between text-sm items-center">
           {attributes && attributes.length > 0 && (
