@@ -7,7 +7,7 @@ import { client } from "@/app/client";
 import { chain } from "@/app/chain";
 import { getOwnedNFTs, nextTokenIdToMint } from "thirdweb/extensions/erc1155";
 import { TRAITS_CONTRACT } from "../../../../constants/addresses";
-import { getContract } from "thirdweb";
+import { getContract, NFT, readContract } from "thirdweb";
 import PartsCard from "./PartsCard";
 
 
@@ -22,51 +22,106 @@ export default function OwnedParts() {
   ];
 
   // Memorizar el valor de traitsContract
-  const traitsContract = useMemo(() => {
-    return getContract({
-      client: client,
-      chain: chain,
-      address: TRAITS_CONTRACT.address,
-    });
-  }, []);
+ const traitsContract = useMemo(() => {
+  return getContract({
+    client: client,
+    chain: chain,
+    address: TRAITS_CONTRACT.address,
+  });
+}, [client, chain]);
 
-  const { data: totalNFTSupply, isLoading: isTotalSupplyLoading } =
-    useReadContract(nextTokenIdToMint, { contract: traitsContract });
+const { data: totalNFTSupply, isLoading: isTotalSupplyLoading } =
+  useReadContract({
+    contract: traitsContract,
+    method: "function nextTokenIdToMint() view returns (uint256)",
+    params: [],
+  });
 
+const [ownedParts, setOwnedParts] = useState<any[]>([]);
+const [loading, setLoading] = useState(true);
 
-  const [ownedParts, setOwnedParts] = useState<any[]>([]);
+const fetchTraits = useCallback(async () => {
+  if (!account?.address || !totalNFTSupply) return;
 
-  const [loading, setLoading] = useState(true);
+  setLoading(true);
 
-   const fetchTraits = useCallback(async () => {
-    if (!totalNFTSupply || !account?.address) return;
+  try {
+    const ownedTraits: NFT[] = [];
 
-    setLoading(true);
+    const tokenIdArray = Array.from({ length: Number(totalNFTSupply) }, (_, i) => BigInt(i));
 
-    try {
-      // Fetch all NFTs owned by the account
-      const nfts = await getOwnedNFTs({
+    // 1. Consultar todos los balances en paralelo
+    const balancePromises = tokenIdArray.map((tokenId) =>
+      readContract({
         contract: traitsContract,
-        start: 0,
-        count: Number(totalNFTSupply),
-        address: account?.address,
-      });
+        method: "function balanceOf(address, uint256) view returns (uint256)",
+        params: [account?.address, tokenId],
+      }).then((balance) => ({ tokenId, balance }))
+    );
 
-      setOwnedParts(nfts);
+    const balances = await Promise.all(balancePromises);
 
-      // Imprimir los NFTs obtenidos para verificar
-      console.log("Owned Parts:", nfts);
-    } catch (error) {
-      console.error("Failed to fetch traits:", error);
-      // Handle error appropriately, e.g., set an error state
-    } finally {
-      setLoading(false);
-    }
-  }, [totalNFTSupply, account?.address, traitsContract]);
+    // 2. Filtrar los que sí posee
+    const ownedTokenIds = balances.filter(({ balance }) => balance > BigInt(0));
 
-  useEffect(() => {
+    // 3. Obtener URIs + metadatos en paralelo
+    const nftPromises = ownedTokenIds.map(async ({ tokenId, balance }) => {
+      try {
+        const rawUri = await readContract({
+          contract: traitsContract,
+          method: "function uri(uint256) view returns (string)",
+          params: [tokenId],
+        });
+
+        const fixedUri = rawUri
+          .replace("ipfs://ipfs/", "ipfs://")
+          .replace("ipfs://", "https://ipfs.io/ipfs/");
+
+        const metadata = await fetch(fixedUri).then((res) => res.json());
+
+        const nft: NFT = {
+          id: tokenId,
+          metadata,
+          owner: account.address,
+          tokenURI: fixedUri,
+          type: "ERC1155",
+          supply: balance,
+          tokenAddress: traitsContract.address as string,
+          chainId: chain.id,
+        };
+
+        return nft;
+      } catch (err) {
+        console.warn(`Error fetching metadata for tokenId ${tokenId}:`, err);
+        return null;
+      }
+    });
+
+    const nfts = await Promise.all(nftPromises);
+
+    // Filtra los nulls
+const erc1155Nfts = nfts.filter((nft): nft is Extract<NFT, { type: "ERC1155" }> => nft !== null);
+setOwnedParts(erc1155Nfts);  } catch (err) {
+    console.error("Failed to fetch traits:", err);
+  } finally {
+    setLoading(false);
+  }
+}, [account?.address, totalNFTSupply, traitsContract, chain]);
+
+
+
+
+
+
+
+
+
+
+useEffect(() => {
+  if (!isTotalSupplyLoading) {
     fetchTraits();
-  }, [fetchTraits]);
+  }
+}, [fetchTraits, isTotalSupplyLoading]);
 
    const handleRefetchClick = () => {
     console.log("Refetch button clicked!");

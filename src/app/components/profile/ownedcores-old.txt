@@ -1,0 +1,223 @@
+"use client";
+
+import { ownerOf } from "thirdweb/extensions/erc721";
+import { BASE_CONTRACT } from "../../../../constants/addresses";
+import { chain } from "@/app/chain";
+import { client } from "@/app/client";
+import { getContract, NFT, readContract } from "thirdweb";
+import { useActiveAccount } from "thirdweb/react";
+import { useEffect, useState } from "react";
+import CoreCard from "./CoreCard";
+
+export default function OwnedCores() {
+  const account = useActiveAccount();
+
+  const baseContract = getContract({
+    client: client,
+    chain: chain,
+    address: BASE_CONTRACT.address,
+  });
+
+  const [ownedBase, setOwnedBase] = useState<NFT[]>([]);
+  const [isLoadingBase, setIsLoadingBase] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Convertir ipfs:// a https://
+  const toHttpUrl = (uri: string): string => {
+    if (uri.startsWith("ipfs://")) {
+      return uri.replace("ipfs://", "https://ipfs.io/ipfs/");
+    }
+    return uri;
+  };
+
+  const getOwnedBase = async () => {
+    if (!account) {
+      console.log("No account connected");
+      setErrorMessage("No account connected");
+      return;
+    }
+
+    setIsLoadingBase(true);
+    setErrorMessage(null);
+    let ownedNFTs: NFT[] = [];
+
+    try {
+      // Obtener nextTokenIdToClaim
+      const nextTokenId = await readContract({
+        contract: baseContract,
+        method: "function nextTokenIdToClaim() view returns (uint256)",
+        params: [],
+      });
+      const totalSupplyBigInt = BigInt(nextTokenId.toString());
+
+      console.log("Next token ID to claim:", totalSupplyBigInt.toString());
+
+      if (totalSupplyBigInt === BigInt(0)) {
+        console.warn("No tokens have been minted yet.");
+        setOwnedBase([]);
+        setIsLoadingBase(false);
+        return;
+      }
+
+      // Filtrar tokens válidos con ownerOf
+      const ownerPromises = [];
+      for (let tokenId = BigInt(0); tokenId < totalSupplyBigInt; tokenId++) {
+        ownerPromises.push(
+          ownerOf({
+            contract: baseContract,
+            tokenId: tokenId,
+          })
+            .then((owner) => {
+              console.log(`Token ID ${tokenId} - Owner: ${owner}`);
+              return { tokenId, owner };
+            })
+            .catch((error) => {
+              console.error(`Error fetching owner for token ${tokenId}:`, error);
+              return null; // Ignorar tokens no existentes
+            })
+        );
+      }
+
+      const owners = await Promise.all(ownerPromises);
+
+      console.log("Account address:", account?.address);
+
+      const ownedTokenIds = owners
+        .filter((result) => result && result.owner.toLowerCase() === account?.address?.toLowerCase())
+        .map((result) => Number(result!.tokenId));
+
+      console.log("Owned token IDs:", ownedTokenIds);
+
+      if (ownedTokenIds.length === 0) {
+        console.warn("⚠️ No NFTs found for this account.");
+        setOwnedBase([]);
+        setIsLoadingBase(false);
+        return;
+      }
+
+      // Obtener metadatos para cada NFT
+      const nftPromises = ownedTokenIds.map(async (tokenId) => {
+        try {
+          // Obtener la URI del token
+          let tokenURI: string;
+          try {
+            tokenURI = await readContract({
+              contract: baseContract,
+              method: "function tokenURI(uint256 tokenId) view returns (string)",
+              params: [BigInt(tokenId)],
+            });
+            console.log(`Token ID ${tokenId} - Token URI:`, tokenURI);
+          } catch (error) {
+            console.error(`Error fetching tokenURI for token ${tokenId}:`, error);
+            tokenURI = ""; // Usar URI vacía si falla
+          }
+
+          // Convertir ipfs:// a https://
+          const httpUrl = toHttpUrl(tokenURI);
+          console.log(`Token ID ${tokenId} - HTTP URL:`, httpUrl);
+
+          // Fetch los metadatos desde la URL convertida
+          let metadata: any = {};
+          if (httpUrl) {
+            try {
+              const metadataResponse = await fetch(httpUrl);
+              if (!metadataResponse.ok) {
+                console.error(`Failed to fetch metadata for token ${tokenId}: ${metadataResponse.statusText}`);
+              } else {
+                metadata = await metadataResponse.json();
+                console.log(`Token ID ${tokenId} - Metadata:`, metadata);
+              }
+            } catch (error) {
+              console.error(`Error fetching metadata for token ${tokenId}:`, error);
+            }
+          }
+
+          return {
+            id: BigInt(tokenId),
+            type: "ERC721",
+            metadata: {
+              id: BigInt(tokenId),
+              name: metadata.name || `SatoshiAp3Core #${tokenId}`,
+              description: metadata.description || "",
+              image: metadata.image ? toHttpUrl(metadata.image) : "",
+              external_url: metadata.external_url ? toHttpUrl(metadata.external_url) : "",
+              attributes: metadata.attributes || [],
+            },
+            owner: account.address,
+          } as NFT;
+        } catch (error) {
+          console.error(`Error fetching data for token ${tokenId}:`, error);
+          return null;
+        }
+      });
+
+      const nftResults = await Promise.all(nftPromises);
+      ownedNFTs = nftResults.filter((nft) => nft !== null) as NFT[];
+
+      console.log("Final Owned NFTs:", ownedNFTs);
+
+      setOwnedBase(ownedNFTs);
+    } catch (error: any) {
+      console.error("Error fetching NFTs:", error);
+      setErrorMessage(error.message || "Failed to fetch NFTs");
+    }
+
+    setIsLoadingBase(false);
+  };
+
+  useEffect(() => {
+    if (account) {
+      getOwnedBase();
+    }
+  }, [account]);
+
+  const handleRefetchClick = () => {
+    console.log("Refetch button clicked!");
+    getOwnedBase();
+  };
+
+  return (
+    <div>
+      <div className="flex flex-row justify-between items-center">
+        <div className="flex flex-row gap-4 items-center">
+          <h2 className="text-2xl font-bold my-8">Satoshi Robotics</h2>
+          <button
+            onClick={handleRefetchClick}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus-shadow-outline ml-2 cursor-pointer"
+          >
+            Refetch
+          </button>
+        </div>
+        <div className="flex flex-row items-center gap-4">
+          <a href="/mint" target="_blank" rel="noopener noreferrer">
+            Mint
+          </a>
+          <a href="/canvas" target="_blank" rel="noopener noreferrer">
+            Build
+          </a>
+          <a
+            href="https://boredonchain.gitbook.io/satoshi-robotics-docs"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Docs →
+          </a>
+        </div>
+      </div>
+
+      {isLoadingBase ? (
+        <p>Loading Robots...</p>
+      ) : errorMessage ? (
+        <p>Error: {errorMessage}</p>
+      ) : ownedBase.length === 0 ? (
+        <p>No Robots yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {ownedBase.map((nft) => (
+            <CoreCard key={nft.id} nft={nft} baseContract={baseContract} refetch={getOwnedBase} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -46,41 +46,79 @@ const Canvas = () => {
   //--------------------OWNED BASE NFTs---------------------------------------------------------
 
 
-     // Obtener robots que posee la cuenta conectada
+    // Obtener robots que posee la cuenta conectada
      const [ownedBase, setOwnedBase] = useState<NFT[]>([]);
      const [isLoadingBase, setIsLoadingBase] = useState(false); // Estado de carga
      const [selectedTokenId, setSelectedTokenId] = useState<number>(0);
 
      const getOwnedBase = async () => {
-        setIsLoadingBase(true); // Activar loading antes de la consulta
-         let ownedBase: NFT[] = [];
-         
-         try {
-             const totalNFTSupply = await totalSupply({ contract: baseContract });
- 
-             const nfts = await getNFTs({
-                 contract: baseContract,
-                 start: 0,
-                 count: parseInt(totalNFTSupply.toString()),
-             });
- 
-             for (let nft of nfts) {
-                 const owner = await ownerOf({
-                     contract: baseContract,
-                     tokenId: nft.id,
-                 });
-                 if (owner === account?.address) {
-                    ownedBase.push(nft);
-                 }
-             }
- 
-             setOwnedBase(ownedBase);
-         } catch (error) {
-             console.error("Error fetching NFTs:", error);
-         }
- 
-         setIsLoadingBase(false); // Desactivar loading después de la consulta
-     };
+  if (!account?.address) return;
+
+  setIsLoadingBase(true);
+  setOwnedBase([]);
+
+  try {
+    const totalNFTSupply = await totalSupply({ contract: baseContract });
+    const total = Number(totalNFTSupply.toString());
+
+    const tokenIds = Array.from({ length: total }, (_, i) => BigInt(i));
+
+    // 1. Obtener los dueños en paralelo
+    const ownershipResults = await Promise.all(
+      tokenIds.map(async (tokenId) => {
+        try {
+          const owner = await ownerOf({ contract: baseContract, tokenId });
+          return { tokenId, owner };
+        } catch (err) {
+          return null;
+        }
+      })
+    );
+
+    // 2. Filtrar por los que son del usuario
+    const ownedTokenIds = ownershipResults
+      .filter((res) => res && res.owner?.toLowerCase() === account.address.toLowerCase())
+      .map((res) => res!.tokenId);
+
+    // 3. Obtener la metadata de cada uno (en paralelo)
+    const ownedNFTs: NFT[] = await Promise.all(
+      ownedTokenIds.map(async (tokenId) => {
+        try {
+          const uri = await readContract({
+            contract: baseContract,
+            method: "function tokenURI(uint256) view returns (string)",
+            params: [tokenId],
+          });
+
+          const fixedUri = uri
+            .replace("ipfs://ipfs/", "ipfs://")
+            .replace("ipfs://", "https://ipfs.io/ipfs/");
+
+          const metadata = await fetch(fixedUri).then((res) => res.json());
+
+          return {
+            id: tokenId,
+            metadata,
+            tokenURI: fixedUri,
+            owner: account.address,
+            type: "ERC721",
+            tokenAddress: baseContract.address as string,
+            chainId: chain.id,
+          } as NFT;
+        } catch (err) {
+          return null;
+        }
+      })
+    ).then((results) => results.filter((nft): nft is NFT => nft !== null));
+
+    setOwnedBase(ownedNFTs);
+  } catch (error) {
+    console.error("Error loading base NFTs:", error);
+  }
+
+  setIsLoadingBase(false);
+};
+
 
      useEffect(() => {
         if (account) {

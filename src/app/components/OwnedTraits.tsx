@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { getContract, prepareContractCall, readContract, toEther } from "thirdweb";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getContract, NFT, prepareContractCall, readContract, toEther } from "thirdweb";
 import {
   MediaRenderer,
   useActiveAccount,
@@ -220,71 +220,101 @@ const TRAIT_TYPE_TO_SLOT: Record<string, number> = {
 
   const [ownedTraits, setOwnedTraits] = useState<Record<number, any[]>>({});
     const [isLoading, setIsLoading] = useState(false);
+
+    const { data: totalNFTSupply, isLoading: isTotalSupplyLoading } =
+      useReadContract({
+        contract: traitsContract,
+        method: "function nextTokenIdToMint() view returns (uint256)",
+        params: [],
+      });
   
- const fetchTraits = async () => {
-  if (!account) return;
+ const fetchTraits = useCallback(async () => {
+  if (!account?.address || !totalNFTSupply) return;
   setIsLoading(true);
 
   try {
-    const traits: any[] = await getOwnedNFTs({
-      contract: traitsContract,
-      start: 0,
-      address: account.address || "",
-    });
+    const tokenIdArray = Array.from({ length: Number(totalNFTSupply) }, (_, i) => BigInt(i));
 
-    console.log("Owned NFTs:", traits);
-
-    const filteredTraits: Record<number, any[]> = {};
-
-    console.log("traitTypes:", traitTypes); // ⚡️ LOG DE traitTypes
-
-    await Promise.all(
-      traitTypes.map(async (slot) => {
-        const traitsForSlot: any[] = [];
-
-        for (const trait of traits) {
-          try {
-            const uri = trait.metadata?.uri;
-            if (!uri) {
-              console.warn("Trait missing metadata URI", trait);
-              continue;
-            }
-
-            // Cargar el JSON desde la URI IPFS
-            const metadataUrl = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
-            const response = await fetch(metadataUrl);
-            const metadata = await response.json();
-
-            const layerType = metadata.layer_type;
-
-            if (!layerType || typeof layerType !== "string") {
-              console.warn("Trait missing layer_type or layer_type is not a string:", metadata);
-              continue;
-            }
-
-            const expectedSlot = TRAIT_TYPE_TO_SLOT[layerType];
-            console.log(`layerType: ${layerType}, expectedSlot: ${expectedSlot}, slot: ${slot}`);
-
-            if (expectedSlot === Number(slot)) {
-              traitsForSlot.push(trait);
-            }
-          } catch (err) {
-            console.error("Error processing trait:", err);
-          }
-        }
-
-        filteredTraits[Number(slot)] = traitsForSlot;
-      })
+    // 1. Obtener balances
+    const balancePromises = tokenIdArray.map((tokenId) =>
+      readContract({
+        contract: traitsContract,
+        method: "function balanceOf(address, uint256) view returns (uint256)",
+        params: [account.address, tokenId],
+      }).then((balance) => ({ tokenId, balance }))
     );
 
-    console.log("Filtered Traits:", filteredTraits);
+    const balances = await Promise.all(balancePromises);
+    const ownedTokenIds = balances.filter(({ balance }) => balance > BigInt(0));
+
+    // 2. Obtener metadata
+    const nftPromises = ownedTokenIds.map(async ({ tokenId, balance }) => {
+      try {
+        const rawUri = await readContract({
+          contract: traitsContract,
+          method: "function uri(uint256) view returns (string)",
+          params: [tokenId],
+        });
+
+        const fixedUri = rawUri
+          .replace("ipfs://ipfs/", "ipfs://")
+          .replace("ipfs://", "https://ipfs.io/ipfs/");
+
+        const metadata = await fetch(fixedUri).then((res) => res.json());
+
+        const nft: NFT = {
+          id: tokenId,
+          metadata,
+          owner: account.address,
+          tokenURI: fixedUri,
+          type: "ERC1155",
+          supply: balance,
+          tokenAddress: traitsContract.address as string,
+          chainId: chain.id,
+        };
+
+        return nft;
+      } catch (err) {
+        console.warn(`Error fetching metadata for tokenId ${tokenId}:`, err);
+        return null;
+      }
+    });
+
+    const nfts = await Promise.all(nftPromises);
+    const erc1155Nfts = nfts.filter((nft): nft is Extract<NFT, { type: "ERC1155" }> => nft !== null);
+
+    // 3. Clasificar por slot
+    const filteredTraits: Record<number, NFT[]> = {};
+
+    for (const slot of traitTypes) {
+      filteredTraits[Number(slot)] = [];
+    }
+
+    for (const nft of erc1155Nfts) {
+const layerType = (nft.metadata as any)?.layer_type;
+
+if (typeof layerType !== "string") {
+  console.warn("Invalid or missing layer_type in metadata:", nft.metadata);
+  continue;
+}
+
+const slot = TRAIT_TYPE_TO_SLOT[layerType];;
+
+      if (slot !== undefined) {
+        if (!filteredTraits[slot]) filteredTraits[slot] = [];
+        filteredTraits[slot].push(nft);
+      }
+    }
+
+    console.log("Filtered Traits by Slot:", filteredTraits);
     setOwnedTraits(filteredTraits);
-  } catch (error) {
-    console.error("Error fetching NFTs:", error);
+  } catch (err) {
+    console.error("Failed to fetch traits:", err);
   } finally {
     setIsLoading(false);
   }
-};
+}, [account?.address, totalNFTSupply, traitsContract, traitTypes, chain]);
+
 
   
   useEffect(() => {

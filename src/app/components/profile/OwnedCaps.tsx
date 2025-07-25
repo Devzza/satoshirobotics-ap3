@@ -16,40 +16,91 @@ export default function OwnedCaps() {
     const account = useActiveAccount();
 
    
-     //--------------------OWNED BASE NFTs---------------------------------------------------------
+    //--------------------OWNED BASE NFTs---------------------------------------------------------
 
          const baseContract = getContract({
         client: client,
         chain: chain,
         address: BASE_CONTRACT.address,
       });
-    
-    
-         // Obtener robots que posee la cuenta conectada
-         const [ownedBase, setOwnedBase] = useState<NFT[]>([]);
-         const [isLoadingBase, setIsLoadingBase] = useState(false); // Estado de carga
-    
-         const getOwnedBase = async () => {
-  setIsLoadingBase(true);
-  try {
-    const nfts = await getOwnedNFTs({
-      contract: baseContract,
-      owner: account?.address!,
-    });
 
-    setOwnedBase(nfts);
-  } catch (error) {
-    console.error("Error fetching owned NFTs:", error);
+     // Obtener robots que posee la cuenta conectada
+     const [ownedBase, setOwnedBase] = useState<NFT[]>([]);
+     const [isLoadingBase, setIsLoadingBase] = useState(false); // Estado de carga
+     const [selectedTokenId, setSelectedTokenId] = useState<number>(0);
+
+     const getOwnedBase = async () => {
+  setIsLoadingBase(true);
+  setOwnedBase([]);
+
+  try {
+    const totalNFTSupply = await totalSupply({ contract: baseContract });
+    const total = Number(totalNFTSupply.toString());
+
+    // Creamos array de tokenIds del 0 al total - 1
+    const tokenIds = Array.from({ length: total }, (_, i) => BigInt(i));
+
+    // 1. Verificar ownership en paralelo
+    const ownershipResults = await Promise.all(
+      tokenIds.map(async (tokenId) => {
+        try {
+          const owner = await ownerOf({
+            contract: baseContract,
+            tokenId,
+          });
+          return { tokenId, owner };
+        } catch (err) {
+          console.warn(`Error getting owner of tokenId ${tokenId.toString()}:`, err);
+          return null;
+        }
+      })
+    );
+
+    // 2. Filtrar solo los que son propiedad del usuario
+    const ownedTokenIds = ownershipResults
+      .filter(
+        (res) =>
+          res &&
+          res.owner?.toLowerCase() === account?.address.toLowerCase()
+      )
+      .map((res) => res!.tokenId);
+
+    // 3. Obtener tokenURIs y hacer fetch de metadata en paralelo
+    const ownedNFTs: NFT[] = await Promise.all(
+      ownedTokenIds.map(async (tokenId) => {
+        try {
+const uri = await readContract({
+              contract: baseContract,
+              method: "function tokenURI(uint256 tokenId) view returns (string)",
+              params: [BigInt(tokenId)],
+            });          const fixedUri = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
+          const metadata = await fetch(fixedUri).then((res) => res.json());
+
+          return {
+            id: tokenId,
+            metadata,
+          } as NFT;
+        } catch (err) {
+          console.warn(`Error loading metadata for token ${tokenId.toString()}:`, err);
+          return null;
+        }
+      })
+    ).then((nfts) => nfts.filter((nft): nft is NFT => nft !== null));
+
+    setOwnedBase(ownedNFTs);
+  } catch (err) {
+    console.error("Error loading NFTs:", err);
   }
+
   setIsLoadingBase(false);
 };
-    
-         useEffect(() => {
-            if (account) {
-                getOwnedBase();
-                console.log(ownedBase)
-            }
-        }, [account]);
+
+
+     useEffect(() => {
+        if (account) {
+            getOwnedBase();
+        }
+    }, [account]);
     
 
 
@@ -57,30 +108,68 @@ export default function OwnedCaps() {
 
  
   const capsContract = getContract({
-    client: client,
-    chain: chain,
-    address: CAPSULES_CONTRACT.address,
-  });
+  client: client,
+  chain: chain,
+  address: CAPSULES_CONTRACT.address,
+});
 
+// Obtener cápsulas que posee la cuenta conectada
+const [ownedCaps, setOwnedCaps] = useState<NFT[]>([]);
+const [isLoadingCaps, setIsLoadingCaps] = useState(false);
 
-     // Obtener capsulas  que posee la cuenta conectada
-     const [ownedCaps, setOwnedCaps] = useState<NFT[]>([]);
-     const [isLoadingCaps, setIsLoadingCaps] = useState(false); // Estado de carga
-
-     const getOwnedCaps = async () => {
+const getOwnedCaps = async () => {
   setIsLoadingCaps(true);
+
   try {
-    const nfts = await getOwnedNFTs({
+    const rawTokenIds = await readContract({
       contract: capsContract,
-      owner: account?.address!,
+      method: "function tokensOfOwner(address owner) view returns (uint256[])",
+      params: [account?.address!],
     });
 
-    setOwnedCaps(nfts);
-  } catch (error) {
-    console.error("Error fetching owned NFTs:", error);
+    const tokenIds = Array.from(rawTokenIds as bigint[]); // Forzamos como bigint[]
+
+    const ownedNFTs: NFT[] = await Promise.all(
+      tokenIds.map(async (tokenId) => {
+        try {
+          const uri: string = await readContract({
+            contract: capsContract,
+            method: "function tokenURI(uint256 tokenId) view returns (string)",
+            params: [tokenId],
+          });
+
+const resolvedUri = uri
+  .replace(/^ipfs:\/\/ipfs:\/\//, "https://ipfs.io/ipfs/")
+  .replace(/^ipfs:\/\//, "https://ipfs.io/ipfs/");
+
+console.log("Resolved URI for token", tokenId.toString(), ":", resolvedUri);
+
+          const response = await fetch(resolvedUri);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const metadata = await response.json();
+
+          return {
+            id: tokenId,
+            metadata,
+          } as NFT;
+        } catch (err) {
+          console.warn(`Error fetching tokenURI for token ${tokenId.toString()}:`, err);
+          return null;
+        }
+      })
+    ).then((nfts) => nfts.filter((nft): nft is NFT => nft !== null));
+
+    setOwnedCaps(ownedNFTs);
+  } catch (err) {
+    console.error("Error fetching capsules via tokensOfOwner:", err);
   }
+
   setIsLoadingCaps(false);
 };
+
 
 
      useEffect(() => {
@@ -96,68 +185,73 @@ export default function OwnedCaps() {
 
  //--------------------DISTRO CAPS CONTRACT---------------------------------------------------------
 
-  const capsDistro = getContract({
-    client: client,
-    chain: chain,
-    address: DISTRO_CONTRACT.address,
-  });
+ const capsDistro = getContract({
+  client: client,
+  chain: chain,
+  address: DISTRO_CONTRACT.address,
+});
 
-   const [capsuleData, setCapsuleData] = useState<
-    { tokenId: bigint; baseTokenId: bigint; claimed: boolean }[]
-  >([]);
+const [capsuleData, setCapsuleData] = useState<
+  { tokenId: bigint; baseTokenId: bigint; claimed: boolean }[]
+>([]);
 
-  const [hasCapsuleToClaim, setHasCapsuleToClaim] = useState(false);
+const [hasCapsuleToClaim, setHasCapsuleToClaim] = useState(false);
 
-  useEffect(() => {
-    if (!account || ownedBase.length === 0) {
-      setHasCapsuleToClaim(false);
-      return;
-    }
+useEffect(() => {
+  if (!account || ownedBase.length === 0) {
+    console.log("No account or no base NFTs, skipping capsule info");
+    setHasCapsuleToClaim(false);
+    setCapsuleData([]);
+    return;
+  }
 
-    const fetchCapsuleInfo = async () => {
-      const results: {
-        tokenId: bigint;
-        baseTokenId: bigint;
-        claimed: boolean;
-      }[] = [];
+  const fetchCapsuleInfo = async () => {
+    console.log("Fetching capsule info for owned base NFTs:", ownedBase.map((nft) => nft.id));
+    const start = performance.now();
 
-      let foundCapsuleToClaim = false;
-
-      for (const nft of ownedBase) {
-        const tokenId = BigInt(nft.id);
-
-        try {
-          const baseTokenId = await readContract({
+    const capsulePromises = ownedBase.map(async (nft) => {
+      const tokenId = BigInt(nft.id);
+      try {
+        const [baseTokenId, claimed] = await Promise.all([
+          readContract({
             contract: capsDistro,
             method: "function capsuleToBaseToken(uint256) view returns (uint256)",
             params: [tokenId],
-          });
-
-          const claimed = await readContract({
+          }),
+          readContract({
             contract: capsDistro,
             method: "function capsuleClaimed(uint256) view returns (bool)",
             params: [tokenId],
-          });
+          }),
+        ]);
 
-          results.push({ tokenId, baseTokenId, claimed });
+        console.log(`Capsule for token ${tokenId}:`, { baseTokenId, claimed });
 
-          if (baseTokenId > 0 && !claimed) {
-            foundCapsuleToClaim = true;
-          }
-        } catch (err) {
-          console.error(
-            `Error fetching capsule data for token ${tokenId}:`,
-            err
-          );
-        }
+        return { tokenId, baseTokenId, claimed };
+      } catch (err) {
+        console.error(`Error fetching capsule data for token ${tokenId}:`, err);
+        return null;
       }
+    });
 
-      setCapsuleData(results);
-      setHasCapsuleToClaim(foundCapsuleToClaim);
-    };
+    const capsuleResults = await Promise.all(capsulePromises);
+    const results = capsuleResults.filter((result): result is { tokenId: bigint; baseTokenId: bigint; claimed: boolean } => result !== null);
 
-    fetchCapsuleInfo();
-  }, [account, ownedBase]);
+    const foundCapsuleToClaim = results.some((result) => result.baseTokenId > 0 && !result.claimed);
+
+    console.log("Capsule data:", results);
+    console.log("Has capsule to claim:", foundCapsuleToClaim);
+    console.log(`fetchCapsuleInfo took ${performance.now() - start}ms`);
+
+    setCapsuleData(results);
+    setHasCapsuleToClaim(foundCapsuleToClaim);
+  };
+
+  fetchCapsuleInfo();
+}, [account, ownedBase]);
+
+      
+
 
       
 
